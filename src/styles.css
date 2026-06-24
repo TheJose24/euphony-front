@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Euphony Music – Dark premium dashboard design system */
+/* The Inter font is loaded via <link> in index.html. */
+
+@layer base {
+  :root {
+    /* Core surfaces */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+
+    --surface-1: 187 18% 4%;        /* #050707 sidebar */
+    --surface-2: 190 8% 10%;        /* #171B1C cards/inputs */
+    --surface-3: 180 7% 14%;        /* hover */
+    --divider: 180 11% 14%;         /* #202525 */
+
+    --card: 190 8% 10%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 190 8% 10%;
+    --popover-foreground: 0 0% 100%;
+
+    /* Brand turquoise #00E6D0 */
+    --primary: 174 100% 45%;
+    --primary-foreground: 0 0% 0%;
+    --primary-glow: 174 100% 55%;
+
+    --secondary: 190 8% 10%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 190 8% 10%;
+    --muted-foreground: 0 0% 63%;       /* #A0A0A0 */
+    --muted-dim: 195 5% 39%;            /* #5F6668 */
+
+    --accent: 174 100% 45%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 180 11% 14%;
+    --input: 190 8% 10%;
+    --ring: 174 100% 45%;
+
+    /* Playlist dots */
+    --dot-red: 350 100% 59%;
+    --dot-green: 150 100% 42%;
+    --dot-yellow: 51 81% 56%;
+    --dot-purple: 264 96% 62%;
+    --cover-yellow: 56 84% 57%;
+
+    --radius: 0.75rem;
+
+    --shadow-glow: 0 0 32px hsl(var(--primary) / 0.45);
+    --transition-base: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  html, body { @apply h-full; }
+  app-root { @apply block h-full; }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: hsl(var(--divider)); border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--surface-3)); }
+
+  /* lucide-angular renders an <svg> inside its host element; make the host
+     behave like the icon itself so flex/sizing utilities work as in React. */
+  lucide-angular, lucide-icon, i-lucide {
+    display: inline-flex;
+    line-height: 0;
+  }
+}
+
+@layer utilities {
+  .text-dim { color: hsl(var(--muted-dim)); }
+  .text-soft { color: hsl(var(--muted-foreground)); }
+  .bg-surface-1 { background-color: hsl(var(--surface-1)); }
+  .bg-surface-2 { background-color: hsl(var(--surface-2)); }
+  .bg-surface-3 { background-color: hsl(var(--surface-3)); }
+  .border-divider { border-color: hsl(var(--divider)); }
+  .shadow-glow { box-shadow: var(--shadow-glow); }
+  .transition-base { transition: var(--transition-base); }
+
+  .display-title {
+    font-size: clamp(56px, 8vw, 104px);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+  }
+}

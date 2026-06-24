@@ -1,0 +1,12 @@
+<div class="group relative w-full max-w-[600px]">
+  <lucide-icon
+    name="search"
+    class="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-dim"
+  ></lucide-icon>
+  <input
+    [value]="value()"
+    (input)="onInput($event)"
+    placeholder="Search by artists, songs or albums"
+    class="h-14 w-full rounded-xl bg-surface-2 pl-14 pr-5 text-[14px] text-foreground placeholder:text-dim outline-none transition-base border border-transparent focus:border-primary/60 focus:shadow-[0_0_0_4px_hsl(var(--primary)/0.08)]"
+  />
+</div>

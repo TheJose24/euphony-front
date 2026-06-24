@@ -1,0 +1,86 @@
+<footer
+  class="sticky bottom-0 z-30 h-[112px] w-full border-t border-divider bg-[#151818] px-4 md:px-6 flex items-center gap-4"
+>
+  <!-- Left: track info -->
+  <div class="flex items-center gap-3 w-[280px] min-w-0 shrink-0">
+    <img
+      [src]="player.current().cover"
+      alt=""
+      width="64"
+      height="64"
+      loading="lazy"
+      class="h-16 w-16 rounded-md object-cover"
+    />
+    <div class="min-w-0">
+      <div class="truncate text-[14px] font-semibold text-foreground">{{ player.current().title }}</div>
+      <div class="truncate text-[12px] text-soft">{{ player.current().artist }}</div>
+    </div>
+    <button
+      type="button"
+      (click)="player.toggleFavorite()"
+      class="ml-2 shrink-0 transition-base"
+      [class]="player.isCurrentFavorite() ? 'text-dot-green' : 'text-soft hover:text-foreground'"
+      aria-label="Favorite"
+    >
+      @if (player.isCurrentFavorite()) {
+        <lucide-icon name="heart" class="h-5 w-5 fill-dot-green"></lucide-icon>
+      } @else {
+        <lucide-icon name="heart" class="h-5 w-5"></lucide-icon>
+      }
+    </button>
+  </div>
+
+  <!-- Center: controls -->
+  <div class="flex-1 flex flex-col items-center gap-2 min-w-0">
+    <div class="flex items-center gap-5">
+      <button type="button" class="text-soft hover:text-foreground transition-base">
+        <lucide-icon name="shuffle" class="h-[18px] w-[18px]"></lucide-icon>
+      </button>
+      <button type="button" class="text-soft hover:text-foreground transition-base">
+        <lucide-icon name="skip-back" class="h-5 w-5 fill-current"></lucide-icon>
+      </button>
+      <button
+        type="button"
+        (click)="player.togglePlay()"
+        class="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black hover:scale-105 transition-base"
+        [attr.aria-label]="player.isPlaying() ? 'Pause' : 'Play'"
+      >
+        @if (player.isPlaying()) {
+          <lucide-icon name="pause" class="h-5 w-5 fill-current"></lucide-icon>
+        } @else {
+          <lucide-icon name="play" class="h-5 w-5 fill-current ml-0.5"></lucide-icon>
+        }
+      </button>
+      <button type="button" class="text-soft hover:text-foreground transition-base">
+        <lucide-icon name="skip-forward" class="h-5 w-5 fill-current"></lucide-icon>
+      </button>
+      <button type="button" class="text-soft hover:text-foreground transition-base">
+        <lucide-icon name="repeat" class="h-[18px] w-[18px]"></lucide-icon>
+      </button>
+    </div>
+    <div class="flex w-full max-w-[640px] items-center gap-3">
+      <span class="text-[11px] text-soft tabular-nums w-10 text-right">{{ fmtTime(player.progress()) }}</span>
+      <div class="group relative h-1 flex-1 rounded-full bg-surface-3 cursor-pointer" (click)="seek($event)">
+        <div
+          class="h-full rounded-full bg-foreground group-hover:bg-primary transition-base"
+          [style.width.%]="player.progressPct()"
+        ></div>
+      </div>
+      <span class="text-[11px] text-soft tabular-nums w-10">{{ fmtTime(player.duration()) }}</span>
+    </div>
+  </div>
+
+  <!-- Right: extras -->
+  <div class="hidden md:flex items-center gap-3 w-[200px] justify-end shrink-0">
+    <button type="button" class="text-soft hover:text-foreground transition-base">
+      <lucide-icon name="list-music" class="h-[18px] w-[18px]"></lucide-icon>
+    </button>
+    <button type="button" class="text-soft hover:text-foreground transition-base">
+      <lucide-icon name="monitor-speaker" class="h-[18px] w-[18px]"></lucide-icon>
+    </button>
+    <lucide-icon name="volume-2" class="h-[18px] w-[18px] text-soft"></lucide-icon>
+    <div class="h-1 w-24 rounded-full bg-surface-3">
+      <div class="h-full w-3/4 rounded-full bg-foreground"></div>
+    </div>
+  </div>
+</footer>

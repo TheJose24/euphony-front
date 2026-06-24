@@ -1,0 +1,17 @@
+<div class="flex min-h-screen flex-col bg-background text-foreground">
+  <div class="flex flex-1 min-h-0">
+    <app-sidebar />
+    <main class="flex-1 min-w-0 flex flex-col">
+      <header class="flex items-center gap-6 px-6 md:px-10 pt-8 pb-2">
+        <app-search-bar [(value)]="query" />
+        <div class="flex-1"></div>
+        <app-user-avatar />
+      </header>
+      <div class="flex-1 overflow-y-auto">
+        <ng-content />
+      </div>
+    </main>
+    <ng-content select="[appRight]" />
+  </div>
+  <app-player-bar />
+</div>

@@ -1,0 +1,44 @@
+<aside class="hidden lg:flex w-[240px] shrink-0 flex-col bg-surface-1 border-r border-divider">
+  <div class="px-6 pt-7 pb-5">
+    <app-logo />
+  </div>
+  <div class="h-px bg-divider mx-6"></div>
+
+  <nav class="flex-1 overflow-y-auto px-3 py-5 space-y-6">
+    <div class="space-y-0.5">
+      @for (item of mainNav; track item.label) {
+        <app-nav-item [icon]="item.icon" [label]="item.label" [to]="item.to" />
+      }
+    </div>
+
+    <div class="space-y-2">
+      <div class="px-3 text-[11px] font-semibold tracking-[0.2em] text-dim">DISCOVERY</div>
+      <div class="space-y-0.5">
+        @for (item of discovery; track item.label) {
+          <app-nav-item [icon]="item.icon" [label]="item.label" />
+        }
+      </div>
+    </div>
+
+    <div class="h-px bg-divider mx-3"></div>
+
+    <div class="space-y-2">
+      <div class="px-3 text-[11px] font-semibold tracking-[0.2em] text-dim">MY PLAYLIST</div>
+      <div class="space-y-0.5">
+        @for (pl of playlists; track pl.label) {
+          <button
+            type="button"
+            class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-[14px] font-medium text-soft transition-base hover:text-foreground"
+          >
+            <span class="h-2 w-2 rounded-full" [class]="pl.color"></span>
+            {{ pl.label }}
+          </button>
+        }
+      </div>
+    </div>
+  </nav>
+
+  <div class="p-3 border-t border-divider">
+    <app-nav-item icon="settings" label="Setting" />
+  </div>
+</aside>

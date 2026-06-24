@@ -1,0 +1,88 @@
+<div class="min-h-screen flex items-center justify-center bg-background px-4 py-10">
+  <div
+    class="w-full max-w-[640px] rounded-2xl bg-[#020202] border border-divider/60 px-10 md:px-16 py-12 shadow-2xl animate-fade-in"
+  >
+    <div class="flex flex-col items-center">
+      <!-- Euphony brand mark (recursos/images/logo.png) -->
+      <img src="assets/logo.png" alt="Euphony" width="52" height="52" class="h-[52px] w-[52px] rounded-[14px] shadow-lg" />
+      <h1 class="mt-5 text-[28px] md:text-[32px] font-extrabold text-foreground text-center">
+        Inicia sesión en Euphony
+      </h1>
+    </div>
+
+    <div class="mt-10 space-y-3">
+      <button
+        type="button"
+        class="flex w-full items-center justify-center gap-3 h-[50px] rounded-full bg-[#1877F2] text-white text-[12px] font-bold tracking-[0.18em] hover:brightness-110 transition-base"
+      >
+        <lucide-icon name="facebook" class="h-5 w-5 fill-white"></lucide-icon> CONTINUAR CON FACEBOOK
+      </button>
+      <button
+        type="button"
+        class="flex w-full items-center justify-center gap-3 h-[50px] rounded-full bg-black border border-white/40 text-white text-[12px] font-bold tracking-[0.18em] hover:bg-white/5 transition-base"
+      >
+        <lucide-icon name="apple" class="h-5 w-5 fill-white"></lucide-icon> CONTINUAR CON APPLE
+      </button>
+      <button
+        type="button"
+        class="flex w-full items-center justify-center gap-3 h-[50px] rounded-full bg-transparent border border-divider text-soft text-[12px] font-bold tracking-[0.18em] hover:text-foreground hover:border-soft transition-base"
+      >
+        <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.3-.4-3.5z" />
+          <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
+          <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.3C29.3 35 26.8 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.6 39.6 16.2 44 24 44z" />
+          <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.6l6.3 5.3C40.8 35.6 44 30.3 44 24c0-1.2-.1-2.3-.4-3.5z" />
+        </svg>
+        CONTINUAR CON GOOGLE
+      </button>
+    </div>
+
+    <div class="my-8 flex items-center gap-4">
+      <div class="h-px flex-1 bg-divider"></div>
+      <span class="text-[13px] text-soft">o</span>
+      <div class="h-px flex-1 bg-divider"></div>
+    </div>
+
+    <form (submit)="onSubmit($event)" class="space-y-5">
+      <div>
+        <label class="block text-[13px] font-semibold text-foreground mb-2">
+          Correo electrónico o nombre de usuario
+        </label>
+        <input
+          #emailInput
+          [value]="email()"
+          (input)="email.set(emailInput.value)"
+          placeholder="Ejm: juan@gmail.com, juan321"
+          class="w-full h-11 rounded-md bg-transparent border border-divider px-4 text-[14px] text-foreground placeholder:text-dim outline-none focus:border-primary transition-base"
+        />
+      </div>
+      <div>
+        <label class="block text-[13px] font-semibold text-foreground mb-2">Contraseña</label>
+        <input
+          #passwordInput
+          type="password"
+          [value]="password()"
+          (input)="password.set(passwordInput.value)"
+          placeholder="Ingresa tu contraseña"
+          class="w-full h-11 rounded-md bg-transparent border border-divider px-4 text-[14px] text-foreground placeholder:text-dim outline-none focus:border-primary transition-base"
+        />
+      </div>
+
+      <button
+        type="submit"
+        class="w-full h-12 rounded-md bg-primary text-white font-semibold text-[15px] hover:brightness-90 transition-base"
+      >
+        Iniciar Sesión
+      </button>
+    </form>
+
+    <div class="mt-6 text-center">
+      <a
+        href="#"
+        class="text-[13px] text-soft underline underline-offset-4 hover:text-primary transition-base"
+      >
+        ¿Se te ha olvidado la contraseña?
+      </a>
+    </div>
+  </div>
+</div>

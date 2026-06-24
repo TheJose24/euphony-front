@@ -1,0 +1,120 @@
+<section class="mt-12">
+  <!-- Header -->
+  <div
+    class="grid grid-cols-[40px_minmax(0,2.2fr)_minmax(0,1.5fr)_minmax(0,1fr)_80px_80px] items-center gap-4 px-4 pb-3 text-[12px] font-semibold uppercase tracking-[0.16em] text-dim border-b border-divider"
+  >
+    <div class="text-center">#</div>
+    <div>Title</div>
+    <div class="hidden md:block">Album</div>
+    <div class="hidden lg:block">Date added</div>
+    <div class="flex justify-end"><lucide-icon name="clock" class="h-4 w-4"></lucide-icon></div>
+    <div></div>
+  </div>
+
+  <div class="mt-2">
+    @if (tracks().length === 0) {
+      <div class="py-12 text-center text-soft text-sm">No tracks match your search.</div>
+    }
+
+    @for (t of tracks(); track t.id; let i = $index) {
+      <div
+        (click)="select.emit(t.id)"
+        class="group grid grid-cols-[40px_minmax(0,2.2fr)_minmax(0,1.5fr)_minmax(0,1fr)_80px_80px] items-center gap-4 rounded-lg px-4 py-3 cursor-pointer transition-base hover:bg-surface-2/60"
+        [class.bg-surface-2]="t.id === activeId()"
+      >
+        <!-- # / play -->
+        <div class="flex items-center justify-center text-soft">
+          @if (t.id === activeId()) {
+            @if (isPlaying()) {
+              <lucide-icon name="pause" class="h-4 w-4 fill-primary text-primary"></lucide-icon>
+            } @else {
+              <lucide-icon name="play" class="h-4 w-4 fill-primary text-primary"></lucide-icon>
+            }
+          } @else {
+            <span class="text-[14px] group-hover:hidden">{{ i + 1 }}</span>
+            <span class="hidden group-hover:block">
+              <lucide-icon name="play" class="h-4 w-4 fill-foreground text-foreground"></lucide-icon>
+            </span>
+          }
+        </div>
+
+        <!-- Title -->
+        <div class="flex items-center gap-3 min-w-0">
+          <img
+            [src]="t.cover"
+            alt=""
+            width="40"
+            height="40"
+            loading="lazy"
+            class="h-10 w-10 rounded-md object-cover shrink-0"
+          />
+          <div class="min-w-0">
+            <div
+              class="truncate text-[15px] font-medium"
+              [class]="t.id === activeId() ? 'text-primary' : 'text-foreground'"
+            >
+              {{ t.title }}
+            </div>
+            <div class="truncate text-[13px] text-soft">{{ t.artist }}</div>
+          </div>
+        </div>
+
+        <!-- Album -->
+        <div class="hidden md:block truncate text-[14px] text-soft">{{ t.album }}</div>
+
+        <!-- Date -->
+        <div class="hidden lg:block truncate text-[13px] text-soft">{{ t.dateAdded }}</div>
+
+        <!-- Duration + heart -->
+        <div class="flex items-center justify-end gap-3">
+          <button
+            type="button"
+            (click)="$event.stopPropagation(); toggleFavorite(t.id)"
+            class="transition-base"
+            [class]="
+              isFavorite(t.id)
+                ? 'text-primary opacity-100'
+                : 'text-soft opacity-0 group-hover:opacity-100 hover:text-foreground'
+            "
+            aria-label="Favorite track"
+          >
+            @if (isFavorite(t.id)) {
+              <lucide-icon name="heart" class="h-4 w-4 fill-primary"></lucide-icon>
+            } @else {
+              <lucide-icon name="heart" class="h-4 w-4"></lucide-icon>
+            }
+          </button>
+          <span class="text-[13px] text-soft tabular-nums">{{ t.duration }}</span>
+        </div>
+
+        <!-- More -->
+        <div class="relative flex justify-end">
+          <button
+            type="button"
+            (click)="$event.stopPropagation(); toggleMenu(t.id)"
+            class="text-soft opacity-0 transition-base group-hover:opacity-100 hover:text-foreground"
+            aria-label="More options"
+          >
+            <lucide-icon name="more-horizontal" class="h-5 w-5"></lucide-icon>
+          </button>
+          @if (isMenuOpen(t.id)) {
+            <div
+              (click)="$event.stopPropagation()"
+              class="absolute right-0 top-7 z-20 w-44 rounded-lg border border-divider bg-surface-2 py-1.5 shadow-2xl animate-fade-in"
+            >
+              @for (opt of menuOptions; track opt) {
+                <button
+                  type="button"
+                  (click)="closeMenu()"
+                  class="block w-full px-3 py-2 text-left text-[13px] text-soft transition-base hover:bg-surface-3 hover:text-foreground"
+                >
+                  {{ opt }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</section>

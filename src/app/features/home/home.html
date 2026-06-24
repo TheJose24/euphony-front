@@ -1,0 +1,18 @@
+<app-layout [(query)]="query">
+  <div class="px-6 md:px-10 py-8">
+    <app-playlist-header
+      [isPlaying]="player.isPlaying()"
+      [isFavorite]="player.isCurrentFavorite()"
+      (togglePlay)="player.togglePlay()"
+      (toggleFavorite)="player.toggleFavorite()"
+    />
+    <app-track-table
+      [tracks]="filtered()"
+      [activeId]="player.current().id"
+      [isPlaying]="player.isPlaying()"
+      (select)="handleSelect($event)"
+    />
+  </div>
+
+  <app-right-panel appRight />
+</app-layout>

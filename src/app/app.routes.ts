@@ -18,6 +18,16 @@ export const routes: Routes = [
     loadComponent: () => import('@features/browse/browse').then((m) => m.Browse),
   },
   {
+    path: 'album/:id',
+    title: 'Álbum · Euphony',
+    loadComponent: () => import('@features/album-detail/album-detail').then((m) => m.AlbumDetail),
+  },
+  {
+    path: 'artist/:id',
+    title: 'Artista · Euphony',
+    loadComponent: () => import('@features/artist-detail/artist-detail').then((m) => m.ArtistDetail),
+  },
+  {
     path: 'player',
     title: 'Player · Euphony',
     loadComponent: () => import('@features/player/player').then((m) => m.Player),

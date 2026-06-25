@@ -1,0 +1,56 @@
+<app-layout>
+  <div class="animate-fade-in">
+    @if (loading()) {
+      <div class="px-6 md:px-10 py-16 text-sm text-soft">Cargando álbum…</div>
+    } @else if (error()) {
+      <div class="px-6 md:px-10 py-16 text-sm text-red-400">{{ error() }}</div>
+    } @else if (album(); as a) {
+      <!-- Header -->
+      <section class="flex flex-col md:flex-row items-center md:items-end gap-6 px-6 md:px-10 pt-10 pb-6">
+        @if (coverUrl(); as cover) {
+          <img
+            [src]="cover"
+            [alt]="a.titulo"
+            class="h-48 w-48 rounded-lg object-cover shadow-2xl shadow-black/40"
+          />
+        } @else {
+          <div class="flex h-48 w-48 items-center justify-center rounded-lg bg-surface-2 text-dim">
+            <lucide-icon name="disc-3" class="h-16 w-16"></lucide-icon>
+          </div>
+        }
+        <div class="min-w-0 text-center md:text-left">
+          <div class="text-[12px] font-bold uppercase tracking-[0.2em] text-soft">Álbum</div>
+          <h1 class="mt-2 text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">{{ a.titulo }}</h1>
+          <p class="mt-3 text-[15px] text-soft">
+            <span class="font-semibold text-foreground">{{ a.artista.name }}</span>
+            @if (year()) { · {{ year() }}}
+            · {{ tracks().length }} canción(es)
+          </p>
+          <button
+            type="button"
+            (click)="playAll()"
+            [disabled]="tracks().length === 0"
+            class="mt-5 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-[14px] font-semibold text-primary-foreground transition-base hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+          >
+            <lucide-icon name="play" class="h-4 w-4 fill-current"></lucide-icon>
+            Reproducir
+          </button>
+        </div>
+      </section>
+
+      <!-- Songs -->
+      <div class="px-6 md:px-10 pb-16">
+        @if (tracks().length === 0) {
+          <div class="py-10 text-sm text-soft">Este álbum no tiene canciones.</div>
+        } @else {
+          <app-track-table
+            [tracks]="tracks()"
+            [activeId]="player.current().id"
+            [isPlaying]="player.isPlaying()"
+            (select)="handleSelect($event)"
+          />
+        }
+      </div>
+    }
+  </div>
+</app-layout>

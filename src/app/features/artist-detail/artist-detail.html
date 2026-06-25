@@ -1,0 +1,67 @@
+<app-layout>
+  <div class="animate-fade-in">
+    @if (loading()) {
+      <div class="px-6 md:px-10 py-16 text-sm text-soft">Cargando artista…</div>
+    } @else if (error()) {
+      <div class="px-6 md:px-10 py-16 text-sm text-red-400">{{ error() }}</div>
+    } @else if (artist(); as ar) {
+      <!-- Header -->
+      <section class="flex flex-col md:flex-row items-center md:items-end gap-6 px-6 md:px-10 pt-10 pb-6">
+        <div
+          class="flex h-48 w-48 shrink-0 items-center justify-center rounded-full bg-surface-2 text-6xl font-bold text-primary ring-1 ring-divider"
+        >
+          {{ initial() }}
+        </div>
+        <div class="min-w-0 text-center md:text-left">
+          <div
+            class="flex items-center justify-center md:justify-start gap-2 text-[12px] font-bold uppercase tracking-[0.2em] text-soft"
+          >
+            <span>Artista</span>
+            @if (ar.isVerified) {
+              <lucide-icon name="badge-check" class="h-4 w-4 text-primary" title="Verificado"></lucide-icon>
+            }
+          </div>
+          <h1 class="mt-2 text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">{{ ar.name }}</h1>
+          <p class="mt-3 text-[15px] text-soft">{{ ar.country }}</p>
+          @if (ar.biography) {
+            <p class="mt-3 max-w-[640px] text-[14px] leading-relaxed text-soft">{{ ar.biography }}</p>
+          }
+          @if (socials().length) {
+            <div class="mt-4 flex flex-wrap justify-center md:justify-start gap-2">
+              @for (s of socials(); track s[0]) {
+                <span class="rounded-full bg-surface-2 px-3 py-1 text-[12px] text-soft">{{ s[0] }}: {{ s[1] }}</span>
+              }
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- Albums -->
+      @if (albums().length) {
+        <section class="px-6 md:px-10 pb-4">
+          <h2 class="text-[13px] font-bold uppercase tracking-[0.18em] text-foreground">Álbumes</h2>
+          <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+            @for (al of albums(); track al.id) {
+              <app-album-card [album]="al" />
+            }
+          </div>
+        </section>
+      }
+
+      <!-- Songs -->
+      <section class="px-6 md:px-10 pb-16">
+        <h2 class="text-[13px] font-bold uppercase tracking-[0.18em] text-foreground">Canciones</h2>
+        @if (tracks().length === 0) {
+          <div class="py-10 text-sm text-soft">Este artista no tiene canciones.</div>
+        } @else {
+          <app-track-table
+            [tracks]="tracks()"
+            [activeId]="player.current().id"
+            [isPlaying]="player.isPlaying()"
+            (select)="handleSelect($event)"
+          />
+        }
+      </section>
+    }
+  </div>
+</app-layout>

@@ -6,12 +6,20 @@
       (togglePlay)="player.togglePlay()"
       (toggleFavorite)="player.toggleFavorite()"
     />
-    <app-track-table
-      [tracks]="filtered()"
-      [activeId]="player.current().id"
-      [isPlaying]="player.isPlaying()"
-      (select)="handleSelect($event)"
-    />
+    @if (loading()) {
+      <div class="mt-12 py-12 text-center text-sm text-soft">Cargando canciones…</div>
+    } @else if (error()) {
+      <div class="mt-12 py-12 text-center text-sm text-red-400">
+        No se pudieron cargar las canciones: {{ error() }}
+      </div>
+    } @else {
+      <app-track-table
+        [tracks]="filtered()"
+        [activeId]="player.current().id"
+        [isPlaying]="player.isPlaying()"
+        (select)="handleSelect($event)"
+      />
+    }
   </div>
 
   <app-right-panel appRight />

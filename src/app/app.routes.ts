@@ -13,6 +13,11 @@ export const routes: Routes = [
     loadComponent: () => import('@features/home/home').then((m) => m.Home),
   },
   {
+    path: 'browse',
+    title: 'Explorar · Euphony',
+    loadComponent: () => import('@features/browse/browse').then((m) => m.Browse),
+  },
+  {
     path: 'player',
     title: 'Player · Euphony',
     loadComponent: () => import('@features/player/player').then((m) => m.Player),

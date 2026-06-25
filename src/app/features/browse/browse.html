@@ -1,0 +1,44 @@
+<app-layout [(query)]="query">
+  <div class="px-6 md:px-10 py-8 animate-fade-in">
+    <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Explorar</h1>
+    <p class="mt-1 text-sm text-soft">Artistas y álbumes de Euphony</p>
+
+    <!-- Artists -->
+    <section class="mt-10">
+      <h2 class="text-[13px] font-bold uppercase tracking-[0.18em] text-foreground">Artistas</h2>
+
+      @if (artistsLoading()) {
+        <div class="py-10 text-sm text-soft">Cargando artistas…</div>
+      } @else if (artistsError()) {
+        <div class="py-10 text-sm text-red-400">No se pudieron cargar los artistas: {{ artistsError() }}</div>
+      } @else if (filteredArtists().length === 0) {
+        <div class="py-10 text-sm text-soft">No hay artistas para mostrar.</div>
+      } @else {
+        <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+          @for (a of filteredArtists(); track a.id) {
+            <app-artist-card [artist]="a" />
+          }
+        </div>
+      }
+    </section>
+
+    <!-- Albums -->
+    <section class="mt-12">
+      <h2 class="text-[13px] font-bold uppercase tracking-[0.18em] text-foreground">Álbumes</h2>
+
+      @if (albumsLoading()) {
+        <div class="py-10 text-sm text-soft">Cargando álbumes…</div>
+      } @else if (albumsError()) {
+        <div class="py-10 text-sm text-red-400">No se pudieron cargar los álbumes: {{ albumsError() }}</div>
+      } @else if (filteredAlbums().length === 0) {
+        <div class="py-10 text-sm text-soft">No hay álbumes para mostrar.</div>
+      } @else {
+        <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+          @for (al of filteredAlbums(); track al.id) {
+            <app-album-card [album]="al" />
+          }
+        </div>
+      }
+    </section>
+  </div>
+</app-layout>

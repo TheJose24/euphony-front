@@ -1,0 +1,21 @@
+<a
+  [routerLink]="['/artist', artist().id]"
+  class="group flex flex-col items-center gap-3 rounded-xl bg-surface-1/40 p-5 text-center transition-base hover:bg-surface-2"
+>
+  <div class="relative">
+    <div
+      class="flex h-24 w-24 items-center justify-center rounded-full bg-surface-2 text-3xl font-bold text-primary ring-1 ring-divider transition-base group-hover:ring-primary"
+    >
+      {{ artist().initial }}
+    </div>
+    @if (artist().verified) {
+      <span class="absolute -bottom-1 -right-1 rounded-full bg-background p-0.5" title="Artista verificado">
+        <lucide-icon name="badge-check" class="h-5 w-5 text-primary"></lucide-icon>
+      </span>
+    }
+  </div>
+  <div class="min-w-0 w-full">
+    <div class="truncate text-[14px] font-semibold text-foreground">{{ artist().name }}</div>
+    <div class="truncate text-[12px] text-soft">{{ artist().country }}</div>
+  </div>
+</a>

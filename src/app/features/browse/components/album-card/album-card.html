@@ -1,0 +1,25 @@
+<a
+  [routerLink]="['/album', album().id]"
+  class="group flex flex-col gap-3 rounded-xl bg-surface-1/40 p-4 transition-base hover:bg-surface-2"
+>
+  <div class="relative aspect-square w-full overflow-hidden rounded-lg bg-surface-2">
+    @if (album().cover; as cover) {
+      <img
+        [src]="cover"
+        [alt]="album().title"
+        loading="lazy"
+        class="h-full w-full object-cover transition-base group-hover:scale-105"
+      />
+    } @else {
+      <div class="flex h-full w-full items-center justify-center text-dim">
+        <lucide-icon name="disc-3" class="h-12 w-12"></lucide-icon>
+      </div>
+    }
+  </div>
+  <div class="min-w-0">
+    <div class="truncate text-[14px] font-semibold text-foreground">{{ album().title }}</div>
+    <div class="truncate text-[12px] text-soft">
+      {{ album().artist }}@if (album().year) { · {{ album().year }}}
+    </div>
+  </div>
+</a>

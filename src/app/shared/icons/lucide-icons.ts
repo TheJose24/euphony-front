@@ -1,6 +1,7 @@
 import { importProvidersFrom } from '@angular/core';
 import {
   Apple,
+  BadgeCheck,
   ChevronRight,
   Clock,
   Disc3,
@@ -37,6 +38,7 @@ import {
 export const lucideIconsProvider = importProvidersFrom(
   LucideAngularModule.pick({
     Apple,
+    BadgeCheck,
     ChevronRight,
     Clock,
     Disc3,

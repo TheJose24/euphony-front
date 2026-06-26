@@ -1,25 +1,122 @@
 <app-layout [(query)]="query">
-  <div class="px-6 md:px-10 py-8">
-    <app-playlist-header
-      [isPlaying]="player.isPlaying()"
-      [isFavorite]="player.isCurrentFavorite()"
-      (togglePlay)="player.togglePlay()"
-      (toggleFavorite)="player.toggleFavorite()"
-    />
-    @if (loading()) {
-      <div class="mt-12 py-12 text-center text-sm text-soft">Cargando canciones…</div>
-    } @else if (error()) {
-      <div class="mt-12 py-12 text-center text-sm text-red-400">
-        No se pudieron cargar las canciones: {{ error() }}
-      </div>
-    } @else {
-      <app-track-table
-        [tracks]="filtered()"
-        [activeId]="player.current().id"
-        [isPlaying]="player.isPlaying()"
-        (select)="handleSelect($event)"
-      />
+  <div class="px-6 md:px-10 py-8 space-y-10 animate-fade-in">
+    <!-- Promotional banners -->
+    <app-hero-banners />
+
+    <!-- Genre categories (only relevant to the Playlist tab) -->
+    @if (activeTab() === 'Playlist') {
+      <section>
+        <h2 class="text-[13px] font-bold uppercase tracking-[0.18em] text-foreground">Category</h2>
+        <app-category-chips
+          class="mt-4 block"
+          [genres]="chips()"
+          [selected]="selectedGenre()"
+          (select)="selectedGenre.set($event)"
+        />
+      </section>
     }
+
+    <!-- Discovery tabs + content -->
+    <section>
+      <app-content-tabs [tabs]="tabs" [active]="activeTab()" (select)="activeTab.set($event)" />
+
+      @if (activeTab() === 'Playlist') {
+        @if (loading()) {
+          <div class="py-16 text-center text-sm text-soft">Cargando canciones…</div>
+        } @else if (error()) {
+          <div class="py-16 text-center text-sm text-red-400">
+            No se pudieron cargar las canciones: {{ error() }}
+          </div>
+        } @else {
+          <app-track-table
+            [tracks]="filtered()"
+            [activeId]="player.current().id"
+            [isPlaying]="player.isPlaying()"
+            [showHeader]="false"
+            [likedIds]="likedIds()"
+            (select)="handleSelect($event)"
+            (favoriteToggle)="onToggleFavorite($event)"
+          />
+        }
+      } @else if (activeTab() === 'Artists') {
+        @if (artistsLoading()) {
+          <div class="py-16 text-center text-sm text-soft">Cargando artistas…</div>
+        } @else if (artistsError()) {
+          <div class="py-16 text-center text-sm text-red-400">
+            No se pudieron cargar los artistas: {{ artistsError() }}
+          </div>
+        } @else if (filteredArtists().length === 0) {
+          <div class="py-16 text-center text-sm text-soft">No hay artistas para mostrar.</div>
+        } @else {
+          <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+            @for (a of filteredArtists(); track a.id) {
+              <app-artist-card [artist]="a" />
+            }
+          </div>
+        }
+      } @else if (activeTab() === 'Albums') {
+        @if (albumsLoading()) {
+          <div class="py-16 text-center text-sm text-soft">Cargando álbumes…</div>
+        } @else if (albumsError()) {
+          <div class="py-16 text-center text-sm text-red-400">
+            No se pudieron cargar los álbumes: {{ albumsError() }}
+          </div>
+        } @else if (filteredAlbums().length === 0) {
+          <div class="py-16 text-center text-sm text-soft">No hay álbumes para mostrar.</div>
+        } @else {
+          <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+            @for (al of filteredAlbums(); track al.id) {
+              <app-album-card [album]="al" />
+            }
+          </div>
+        }
+      } @else if (activeTab() === 'Streams') {
+        @if (loading()) {
+          <div class="py-16 text-center text-sm text-soft">Cargando canciones…</div>
+        } @else if (error()) {
+          <div class="py-16 text-center text-sm text-red-400">
+            No se pudieron cargar las canciones: {{ error() }}
+          </div>
+        } @else {
+          <app-track-table
+            [tracks]="streamed()"
+            [activeId]="player.current().id"
+            [isPlaying]="player.isPlaying()"
+            [showHeader]="false"
+            [likedIds]="likedIds()"
+            (select)="handleSelect($event)"
+            (favoriteToggle)="onToggleFavorite($event)"
+          />
+        }
+      } @else if (activeTab() === 'Favorites') {
+        @if (favoritesLoading()) {
+          <div class="py-16 text-center text-sm text-soft">Cargando favoritos…</div>
+        } @else if (favoritesError()) {
+          <div class="py-16 text-center text-sm text-red-400">
+            No se pudieron cargar los favoritos: {{ favoritesError() }}
+          </div>
+        } @else if (filteredFavorites().length === 0) {
+          <div class="py-16 text-center text-sm text-soft">Aún no tienes canciones favoritas.</div>
+        } @else {
+          <app-track-table
+            [tracks]="filteredFavorites()"
+            [activeId]="player.current().id"
+            [isPlaying]="player.isPlaying()"
+            [showHeader]="false"
+            [likedIds]="likedIds()"
+            (select)="handleSelect($event)"
+            (favoriteToggle)="onToggleFavorite($event)"
+          />
+        }
+      } @else {
+        <div class="py-20 text-center text-sm text-soft">
+          «{{ activeTab() }}» llegará muy pronto.
+        </div>
+      }
+    </section>
+
+    <!-- Popular artists -->
+    <app-popular-artists />
   </div>
 
   <app-right-panel appRight />

@@ -7,6 +7,8 @@ export interface Track {
   cover: string;
   dateAdded: string;
   duration: string;
+  /** Genre names attached to the song, used to filter by category. */
+  genres: string[];
 }
 
 /** Card item used in the right-hand "Favorite Album / Music" panel. */

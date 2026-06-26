@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, model } from '@angular/core';
+import { LucideAngularModule } from 'lucide-angular';
 import { Sidebar } from '../sidebar/sidebar';
 import { SearchBar } from '../search-bar/search-bar';
 import { UserAvatar } from '../user-avatar/user-avatar';
@@ -12,7 +13,7 @@ import { PlayerBar } from '../player-bar/player-bar';
 @Component({
   selector: 'app-layout',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Sidebar, SearchBar, UserAvatar, PlayerBar],
+  imports: [LucideAngularModule, Sidebar, SearchBar, UserAvatar, PlayerBar],
   templateUrl: './app-layout.html',
 })
 export class AppLayout {

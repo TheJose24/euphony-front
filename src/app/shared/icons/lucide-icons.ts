@@ -4,6 +4,7 @@ import {
   BadgeCheck,
   ChevronRight,
   Clock,
+  Crown,
   Disc3,
   Download,
   Facebook,
@@ -27,6 +28,7 @@ import {
   SkipBack,
   SkipForward,
   TrendingUp,
+  Users,
   Volume2,
   LucideAngularModule,
 } from 'lucide-angular';
@@ -41,6 +43,7 @@ export const lucideIconsProvider = importProvidersFrom(
     BadgeCheck,
     ChevronRight,
     Clock,
+    Crown,
     Disc3,
     Download,
     Facebook,
@@ -64,6 +67,7 @@ export const lucideIconsProvider = importProvidersFrom(
     SkipBack,
     SkipForward,
     TrendingUp,
+    Users,
     Volume2,
   }),
 );

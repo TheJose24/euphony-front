@@ -12,13 +12,13 @@ export const CHILL_MIX_COVER = 'assets/chill-mix.jpg';
 export const AVATAR = 'assets/avatar.jpg';
 
 export const tracks: Track[] = [
-  { id: '1', title: 'Relax and Unwind', artist: 'Lily Moonshadow', album: 'Serene Sounds', cover: album1, dateAdded: '2 days ago', duration: '20:24' },
-  { id: '2', title: 'Midnight Reverie', artist: 'Max Silverlake', album: 'Cityscapes in Music', cover: album2, dateAdded: '5 days ago', duration: '12:32' },
-  { id: '3', title: 'Whispered Echoes', artist: 'Ruby Riversong', album: 'Songs of the Night', cover: album3, dateAdded: '1 week ago', duration: '15:15' },
-  { id: '4', title: 'Tides of Tranquility', artist: 'Finn Oceanwood', album: 'Whispers of the Wilderness', cover: album4, dateAdded: '2 weeks ago', duration: '54:32' },
-  { id: '5', title: 'Neon Daydream', artist: 'Lily Moonshadow', album: 'Chronicles of the Cybernetic Age', cover: album5, dateAdded: '3 weeks ago', duration: '08:11' },
-  { id: '6', title: 'Velvet Horizon', artist: 'Max Silverlake', album: 'Serene Sounds', cover: album1, dateAdded: '1 month ago', duration: '04:48' },
-  { id: '7', title: 'Glass Cathedrals', artist: 'Ruby Riversong', album: 'Cityscapes in Music', cover: album2, dateAdded: '1 month ago', duration: '06:22' },
+  { id: '1', title: 'Relax and Unwind', artist: 'Lily Moonshadow', album: 'Serene Sounds', cover: album1, dateAdded: '2 days ago', duration: '20:24', genres: [] },
+  { id: '2', title: 'Midnight Reverie', artist: 'Max Silverlake', album: 'Cityscapes in Music', cover: album2, dateAdded: '5 days ago', duration: '12:32', genres: [] },
+  { id: '3', title: 'Whispered Echoes', artist: 'Ruby Riversong', album: 'Songs of the Night', cover: album3, dateAdded: '1 week ago', duration: '15:15', genres: [] },
+  { id: '4', title: 'Tides of Tranquility', artist: 'Finn Oceanwood', album: 'Whispers of the Wilderness', cover: album4, dateAdded: '2 weeks ago', duration: '54:32', genres: [] },
+  { id: '5', title: 'Neon Daydream', artist: 'Lily Moonshadow', album: 'Chronicles of the Cybernetic Age', cover: album5, dateAdded: '3 weeks ago', duration: '08:11', genres: [] },
+  { id: '6', title: 'Velvet Horizon', artist: 'Max Silverlake', album: 'Serene Sounds', cover: album1, dateAdded: '1 month ago', duration: '04:48', genres: [] },
+  { id: '7', title: 'Glass Cathedrals', artist: 'Ruby Riversong', album: 'Cityscapes in Music', cover: album2, dateAdded: '1 month ago', duration: '06:22', genres: [] },
 ];
 
 export const favoriteAlbums: FavoriteItem[] = [
@@ -45,4 +45,5 @@ export const defaultTrack: Track = {
   cover: PLAY_IT_SAFE_COVER,
   dateAdded: 'Mar 19',
   duration: '4:22',
+  genres: [],
 };

@@ -12,26 +12,24 @@ export class TrackTable {
   readonly tracks = input.required<Track[]>();
   readonly activeId = input<string | null>(null);
   readonly isPlaying = input.required<boolean>();
+  /** Hide the column header when embedding the table under the Home tabs. */
+  readonly showHeader = input(true);
+  /** Ids of the user's liked songs; drives the filled hearts. */
+  readonly likedIds = input<ReadonlySet<string>>(new Set());
   readonly select = output<string>();
+  /** Emitted when a heart is clicked; the parent performs the like/unlike. */
+  readonly favoriteToggle = output<string>();
 
-  /** Per-row "liked" hearts — local to the table, as in the original React component. */
-  private readonly favorites = signal<ReadonlySet<string>>(new Set());
   private readonly openMenu = signal<string | null>(null);
 
   protected readonly menuOptions = ['Add to queue', 'Share', 'View details'];
 
   isFavorite(id: string): boolean {
-    return this.favorites().has(id);
+    return this.likedIds().has(id);
   }
 
   toggleFavorite(id: string): void {
-    const next = new Set(this.favorites());
-    if (next.has(id)) {
-      next.delete(id);
-    } else {
-      next.add(id);
-    }
-    this.favorites.set(next);
+    this.favoriteToggle.emit(id);
   }
 
   isMenuOpen(id: string): boolean {

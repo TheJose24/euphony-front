@@ -22,8 +22,11 @@ interface PlaylistEntry {
 export class Sidebar {
   protected readonly mainNav: NavEntry[] = [
     { icon: 'home', label: 'Home', to: '/home' },
-    { icon: 'disc-3', label: 'Browse', to: '/browse' },
-    { icon: 'list-music', label: 'Playlist', to: '/player' },
+    { icon: 'search', label: 'Search', to: '/browse' },
+    { icon: 'heart', label: 'Likes' },
+    { icon: 'list-music', label: 'Playlists' },
+    { icon: 'disc-3', label: 'Albums' },
+    { icon: 'users', label: 'Following' },
   ];
 
   protected readonly discovery: NavEntry[] = [

@@ -1,0 +1,31 @@
+<section>
+  <h2 class="text-[13px] font-bold uppercase tracking-[0.18em] text-foreground">Popular Artist</h2>
+
+  <div class="mt-4 flex gap-5 overflow-x-auto pb-2">
+    @for (artist of artists; track artist.name) {
+      <button
+        type="button"
+        class="group relative w-[200px] shrink-0 overflow-hidden rounded-xl bg-surface-1/40 text-left transition-base hover:bg-surface-2"
+      >
+        <div class="relative aspect-[4/3] w-full overflow-hidden">
+          <img
+            [src]="artist.photo"
+            [alt]="artist.name"
+            loading="lazy"
+            class="h-full w-full object-cover transition-base group-hover:scale-105"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+          <span
+            class="absolute bottom-3 right-3 flex h-10 w-10 translate-y-2 items-center justify-center rounded-full bg-primary text-primary-foreground opacity-0 shadow-glow transition-base group-hover:translate-y-0 group-hover:opacity-100"
+          >
+            <lucide-icon name="play" class="h-4 w-4 fill-current ml-0.5"></lucide-icon>
+          </span>
+        </div>
+        <div class="px-4 py-3">
+          <div class="truncate text-[14px] font-semibold text-foreground">{{ artist.name }}</div>
+          <div class="truncate text-[12px] text-soft">Artist</div>
+        </div>
+      </button>
+    }
+  </div>
+</section>

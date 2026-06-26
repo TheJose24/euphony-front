@@ -17,5 +17,6 @@ export function toTrack(dto: SongResponseDTO): Track {
     cover: mediaUrl(dto.coverImg ?? dto.albumCover) ?? FALLBACK_COVER,
     dateAdded: dto.releaseDate ?? '—',
     duration: dto.duration ? fmtTime(toSeconds(dto.duration)) : '0:00',
+    genres: dto.genres ?? [],
   };
 }

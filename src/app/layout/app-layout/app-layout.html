@@ -3,8 +3,15 @@
     <app-sidebar />
     <main class="flex-1 min-w-0 flex flex-col">
       <header class="flex items-center gap-6 px-6 md:px-10 pt-8 pb-2">
-        <app-search-bar [(value)]="query" />
+        <app-search-bar class="flex-1 max-w-[860px]" [(value)]="query" />
         <div class="flex-1"></div>
+        <button
+          type="button"
+          class="hidden md:inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-[14px] font-semibold text-primary-foreground shadow-glow transition-base hover:bg-primary-glow"
+        >
+          <lucide-icon name="download" class="h-4 w-4" [strokeWidth]="2"></lucide-icon>
+          Download Now
+        </button>
         <app-user-avatar />
       </header>
       <div class="flex-1 overflow-y-auto">

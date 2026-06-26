@@ -20,4 +20,6 @@ export interface ArtistResponseDTO {
   country: string;
   socialNetworks: Record<string, string> | null;
   isVerified: boolean;
+  /** Artist photo served via `/uploads/images/...`, or null when none. */
+  imageUrl: string | null;
 }

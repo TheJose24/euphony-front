@@ -8,6 +8,8 @@ export interface ArtistTile {
   verified: boolean;
   /** First letter of the name, used for the placeholder avatar. */
   initial: string;
+  /** Resolved artist photo URL, or null to fall back to the initial avatar. */
+  image: string | null;
 }
 
 /** Album tile rendered in the Browse grid. */

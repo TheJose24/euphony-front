@@ -46,3 +46,6 @@ Thumbs.db
 # Claude Code
 .claude/settings.local.json
 .claude/*.log
+
+# Documentación interna (no se versiona)
+docs_backend/

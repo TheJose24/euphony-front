@@ -16,10 +16,8 @@ export class PlayerBar {
   protected readonly fav = inject(FavoritesStore);
   protected readonly fmtTime = fmtTime;
 
-  /** Scrub the progress bar to the clicked position. */
-  seek(event: MouseEvent): void {
-    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    const ratio = (event.clientX - rect.left) / rect.width;
-    this.player.setProgress(ratio * this.player.duration());
+  /** Scrub to the value of the range slider (keyboard, drag, or click all flow through `input`). */
+  seek(event: Event): void {
+    this.player.setProgress(Number((event.target as HTMLInputElement).value));
   }
 }

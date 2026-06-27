@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { AppLayout } from '@layout/app-layout/app-layout';
 import { PlayerStore } from '@core/state/player.store';
@@ -9,7 +10,7 @@ import { fmtTime } from '@core/utils/format';
 @Component({
   selector: 'app-player',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AppLayout, LucideAngularModule],
+  imports: [AppLayout, LucideAngularModule, RouterLink],
   templateUrl: './player.html',
 })
 export class Player {
@@ -17,10 +18,8 @@ export class Player {
   protected readonly fav = inject(FavoritesStore);
   protected readonly fmtTime = fmtTime;
 
-  /** Scrub the progress bar to the clicked position. */
-  seek(event: MouseEvent): void {
-    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    const ratio = (event.clientX - rect.left) / rect.width;
-    this.player.setProgress(ratio * this.player.duration());
+  /** Scrub to the value of the range slider (keyboard, drag, or click all flow through `input`). */
+  seek(event: Event): void {
+    this.player.setProgress(Number((event.target as HTMLInputElement).value));
   }
 }

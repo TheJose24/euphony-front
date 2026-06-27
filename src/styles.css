@@ -128,3 +128,87 @@
     text-wrap: balance;
   }
 }
+
+@layer components {
+  /* Accessible seek/scrubber — a native <input type="range"> styled to the player.
+     Keyboard (←/→, Home/End), focus and the slider role/value come for free.
+     The played portion is drawn from the `--seek-pct` custom property the component binds
+     (e.g. "42%"); the fill turns turquoise on hover/focus, and a thumb fades in. */
+  .player-seek {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 20px; /* taller hit/grab area than the 6px visual track */
+    background: transparent;
+    cursor: pointer;
+  }
+  .player-seek:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 4px;
+    border-radius: 9999px;
+  }
+
+  /* WebKit / Blink */
+  .player-seek::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 9999px;
+    background: linear-gradient(
+      to right,
+      hsl(var(--foreground)) var(--seek-pct, 0%),
+      hsl(var(--surface-3)) var(--seek-pct, 0%)
+    );
+  }
+  .player-seek:hover::-webkit-slider-runnable-track,
+  .player-seek:focus-visible::-webkit-slider-runnable-track {
+    background: linear-gradient(
+      to right,
+      hsl(var(--primary)) var(--seek-pct, 0%),
+      hsl(var(--surface-3)) var(--seek-pct, 0%)
+    );
+  }
+  .player-seek::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 12px;
+    width: 12px;
+    margin-top: -3px; /* center the 12px thumb on the 6px track */
+    border-radius: 9999px;
+    background: hsl(var(--foreground));
+    opacity: 0;
+    transition: opacity 0.15s ease, background 0.15s ease;
+  }
+  .player-seek:hover::-webkit-slider-thumb,
+  .player-seek:focus-visible::-webkit-slider-thumb {
+    opacity: 1;
+    background: hsl(var(--primary));
+  }
+
+  /* Firefox */
+  .player-seek::-moz-range-track {
+    height: 6px;
+    border-radius: 9999px;
+    background: hsl(var(--surface-3));
+  }
+  .player-seek::-moz-range-progress {
+    height: 6px;
+    border-radius: 9999px;
+    background: hsl(var(--foreground));
+  }
+  .player-seek:hover::-moz-range-progress,
+  .player-seek:focus-visible::-moz-range-progress {
+    background: hsl(var(--primary));
+  }
+  .player-seek::-moz-range-thumb {
+    height: 12px;
+    width: 12px;
+    border: none;
+    border-radius: 9999px;
+    background: hsl(var(--foreground));
+    opacity: 0;
+    transition: opacity 0.15s ease, background 0.15s ease;
+  }
+  .player-seek:hover::-moz-range-thumb,
+  .player-seek:focus-visible::-moz-range-thumb {
+    opacity: 1;
+    background: hsl(var(--primary));
+  }
+}

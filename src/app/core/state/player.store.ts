@@ -6,6 +6,15 @@ import { SongsService } from '@core/api/songs.service';
 
 export type RepeatMode = 'off' | 'all' | 'one';
 
+/** Lifecycle of the current track. Drives the player's loading / error / empty UI states. */
+export type PlaybackStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
+
+/** The default/placeholder track has a non-numeric id and no backing stream. */
+function isRealSong(track: Track): boolean {
+  const id = Number(track.id);
+  return Number.isInteger(id) && id > 0;
+}
+
 /**
  * Global playback state + the real `<audio>` element driving it.
  *
@@ -18,6 +27,10 @@ export type RepeatMode = 'off' | 'all' | 'one';
  * A track's `id` is the backend song id (as string); `streamUrl(id)` points the element at
  * `GET /api/v1/songs/stream/{id}` (Range-enabled). The mock `defaultTrack` has a non-numeric id, so
  * it stays silent until the user picks a real song. Likes live in `FavoritesStore`, not here.
+ *
+ * Playback lifecycle is modelled explicitly as `status` (`idle | loading | playing | paused |
+ * error`) rather than a single boolean, so the UI can honestly show "nothing cued", buffering, and
+ * failed streams instead of optimistically claiming a track is playing.
  */
 @Injectable({ providedIn: 'root' })
 export class PlayerStore {
@@ -25,7 +38,7 @@ export class PlayerStore {
 
   private readonly _queue = signal<readonly Track[]>([defaultTrack]);
   private readonly _index = signal(0);
-  private readonly _isPlaying = signal(false);
+  private readonly _status = signal<PlaybackStatus>('idle');
   private readonly _progress = signal(0);
   private readonly _duration = signal(toSeconds(defaultTrack.duration));
   private readonly _shuffle = signal(false);
@@ -33,13 +46,21 @@ export class PlayerStore {
 
   /** The track currently loaded in the player bar / player page (queue position). */
   readonly current = computed(() => this._queue()[this._index()] ?? defaultTrack);
-  readonly isPlaying = this._isPlaying.asReadonly();
   readonly progress = this._progress.asReadonly();
   readonly duration = this._duration.asReadonly();
   readonly queue = this._queue.asReadonly();
   readonly index = this._index.asReadonly();
   readonly shuffle = this._shuffle.asReadonly();
   readonly repeat = this._repeat.asReadonly();
+
+  /** Full playback lifecycle. */
+  readonly status = this._status.asReadonly();
+  /** Convenience flags derived from `status` for templates and sibling components. */
+  readonly isPlaying = computed(() => this._status() === 'playing');
+  readonly isLoading = computed(() => this._status() === 'loading');
+  readonly hasError = computed(() => this._status() === 'error');
+  /** A real, streamable song is cued (not the silent placeholder default). */
+  readonly hasTrack = computed(() => isRealSong(this.current()));
 
   /** Tracks queued after the current one — feeds the "Up next" panel. */
   readonly upNext = computed(() => this._queue().slice(this._index() + 1));
@@ -76,11 +97,20 @@ export class PlayerStore {
   }
 
   togglePlay(): void {
+    if (!isRealSong(this.current())) return; // nothing real to play (silent placeholder)
     if (this.audio.paused) {
-      void this.audio.play().catch(() => this._isPlaying.set(false));
+      this._status.set('loading');
+      void this.audio.play().catch(() => {
+        if (this._status() === 'loading') this._status.set('paused');
+      });
     } else {
       this.audio.pause();
     }
+  }
+
+  /** Re-attempt the current track after a playback error. */
+  retry(): void {
+    this.playAt(this._index());
   }
 
   /** Advance to the next track, honouring shuffle and repeat. No-op past the end when repeat is off. */
@@ -152,16 +182,19 @@ export class PlayerStore {
 
   /** Point the audio element at a track's stream and start playing (if it's a real song). */
   private load(track: Track): void {
-    const songId = Number(track.id);
-    if (Number.isInteger(songId) && songId > 0) {
-      this.audio.src = this.songs.streamUrl(songId);
-      this._isPlaying.set(true); // optimistic; corrected by the play/error events
-      void this.audio.play().catch(() => this._isPlaying.set(false));
+    if (isRealSong(track)) {
+      this.audio.src = this.songs.streamUrl(Number(track.id));
+      this._status.set('loading'); // confirmed by the 'playing' / 'error' events below
+      void this.audio.play().catch(() => {
+        // Autoplay blocked (no user gesture) leaves the track cued but paused; a real
+        // load/network failure surfaces via the 'error' event, which wins over this.
+        if (this._status() === 'loading') this._status.set('paused');
+      });
     } else {
-      // Mock/default track with no backing audio — stay silent.
+      // Placeholder/default track with no backing audio — nothing is really cued.
       this.audio.removeAttribute('src');
       this.audio.load();
-      this._isPlaying.set(false);
+      this._status.set('idle');
     }
   }
 
@@ -172,7 +205,7 @@ export class PlayerStore {
     } else if (this.hasNext() || (this._shuffle() && this._queue().length > 1)) {
       this.next();
     } else {
-      this._isPlaying.set(false);
+      this._status.set('paused');
     }
   }
 
@@ -180,10 +213,19 @@ export class PlayerStore {
   private createAudio(): HTMLAudioElement {
     const audio = new Audio();
     audio.preload = 'metadata';
-    audio.addEventListener('play', () => this._isPlaying.set(true));
-    audio.addEventListener('pause', () => this._isPlaying.set(false));
+    // 'playing' fires when audio actually starts (after any buffering); 'waiting' when it stalls.
+    audio.addEventListener('playing', () => this._status.set('playing'));
+    audio.addEventListener('waiting', () => {
+      if (isRealSong(this.current())) this._status.set('loading');
+    });
+    audio.addEventListener('pause', () => {
+      // Only a real pause of live playback; ignore pauses caused by swapping the source.
+      if (this._status() === 'playing') this._status.set('paused');
+    });
     audio.addEventListener('ended', () => this.onEnded());
-    audio.addEventListener('error', () => this._isPlaying.set(false));
+    audio.addEventListener('error', () => {
+      if (isRealSong(this.current())) this._status.set('error');
+    });
     audio.addEventListener('timeupdate', () => this._progress.set(audio.currentTime));
     audio.addEventListener('loadedmetadata', () => {
       if (Number.isFinite(audio.duration)) this._duration.set(audio.duration);

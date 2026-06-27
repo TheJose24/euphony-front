@@ -1,9 +1,11 @@
 <app-layout>
   <div class="animate-fade-in">
     @if (loading()) {
-      <div class="px-6 md:px-10 py-16 text-sm text-soft">Cargando artista…</div>
+      <div class="px-6 md:px-10">
+        <app-loading-state label="Cargando artista…" />
+      </div>
     } @else if (error()) {
-      <div class="px-6 md:px-10 py-16 text-sm text-red-400">{{ error() }}</div>
+      <app-error-state [message]="error() ?? ''" (retry)="retry()" />
     } @else if (artist(); as ar) {
       <!-- Header -->
       <section class="flex flex-col md:flex-row items-center md:items-end gap-6 px-6 md:px-10 pt-10 pb-6">
@@ -21,8 +23,25 @@
               <lucide-icon name="badge-check" class="h-4 w-4 text-primary" title="Verificado"></lucide-icon>
             }
           </div>
-          <h1 class="mt-2 text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">{{ ar.name }}</h1>
+          <h1 class="mt-2 font-display text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">{{ ar.name }}</h1>
           <p class="mt-3 text-[15px] text-soft">{{ ar.country }}</p>
+          <button
+            type="button"
+            (click)="follow.toggle(ar.idArtist, ar.name)"
+            class="mt-4 inline-flex items-center gap-2 rounded-full px-5 py-2 text-[13px] font-semibold transition-base"
+            [class]="
+              follow.isFollowing(ar.idArtist)
+                ? 'bg-primary text-primary-foreground hover:bg-primary-glow'
+                : 'border border-divider text-foreground hover:border-primary'
+            "
+            [attr.aria-pressed]="follow.isFollowing(ar.idArtist)"
+          >
+            <lucide-icon
+              [name]="follow.isFollowing(ar.idArtist) ? 'badge-check' : 'plus'"
+              class="h-4 w-4"
+            ></lucide-icon>
+            {{ follow.isFollowing(ar.idArtist) ? 'Siguiendo' : 'Seguir' }}
+          </button>
           @if (ar.biography) {
             <p class="mt-3 max-w-[640px] text-[14px] leading-relaxed text-soft">{{ ar.biography }}</p>
           }
@@ -52,7 +71,7 @@
       <section class="px-6 md:px-10 pb-16">
         <h2 class="text-[13px] font-bold uppercase tracking-[0.18em] text-foreground">Canciones</h2>
         @if (tracks().length === 0) {
-          <div class="py-10 text-sm text-soft">Este artista no tiene canciones.</div>
+          <app-empty-state icon="music-2" message="Este artista no tiene canciones." />
         } @else {
           <app-track-table
             [tracks]="tracks()"

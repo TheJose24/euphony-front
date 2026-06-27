@@ -22,11 +22,12 @@
 
       @if (activeTab() === 'Playlist') {
         @if (loading()) {
-          <div class="py-16 text-center text-sm text-soft">Cargando canciones…</div>
+          <app-loading-state label="Cargando canciones…" />
         } @else if (error()) {
-          <div class="py-16 text-center text-sm text-red-400">
-            No se pudieron cargar las canciones: {{ error() }}
-          </div>
+          <app-error-state
+            [message]="'No se pudieron cargar las canciones: ' + error()"
+            (retry)="loadSongs()"
+          />
         } @else {
           <app-track-table
             [tracks]="filtered()"
@@ -40,13 +41,14 @@
         }
       } @else if (activeTab() === 'Artists') {
         @if (artistsLoading()) {
-          <div class="py-16 text-center text-sm text-soft">Cargando artistas…</div>
+          <app-loading-state label="Cargando artistas…" />
         } @else if (artistsError()) {
-          <div class="py-16 text-center text-sm text-red-400">
-            No se pudieron cargar los artistas: {{ artistsError() }}
-          </div>
+          <app-error-state
+            [message]="'No se pudieron cargar los artistas: ' + artistsError()"
+            (retry)="loadArtists()"
+          />
         } @else if (filteredArtists().length === 0) {
-          <div class="py-16 text-center text-sm text-soft">No hay artistas para mostrar.</div>
+          <app-empty-state icon="users" message="No hay artistas para mostrar." />
         } @else {
           <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
             @for (a of filteredArtists(); track a.id) {
@@ -56,13 +58,14 @@
         }
       } @else if (activeTab() === 'Albums') {
         @if (albumsLoading()) {
-          <div class="py-16 text-center text-sm text-soft">Cargando álbumes…</div>
+          <app-loading-state label="Cargando álbumes…" />
         } @else if (albumsError()) {
-          <div class="py-16 text-center text-sm text-red-400">
-            No se pudieron cargar los álbumes: {{ albumsError() }}
-          </div>
+          <app-error-state
+            [message]="'No se pudieron cargar los álbumes: ' + albumsError()"
+            (retry)="loadAlbums()"
+          />
         } @else if (filteredAlbums().length === 0) {
-          <div class="py-16 text-center text-sm text-soft">No hay álbumes para mostrar.</div>
+          <app-empty-state icon="disc-3" message="No hay álbumes para mostrar." />
         } @else {
           <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
             @for (al of filteredAlbums(); track al.id) {
@@ -72,11 +75,12 @@
         }
       } @else if (activeTab() === 'Streams') {
         @if (loading()) {
-          <div class="py-16 text-center text-sm text-soft">Cargando canciones…</div>
+          <app-loading-state label="Cargando canciones…" />
         } @else if (error()) {
-          <div class="py-16 text-center text-sm text-red-400">
-            No se pudieron cargar las canciones: {{ error() }}
-          </div>
+          <app-error-state
+            [message]="'No se pudieron cargar las canciones: ' + error()"
+            (retry)="loadSongs()"
+          />
         } @else {
           <app-track-table
             [tracks]="streamed()"
@@ -89,14 +93,15 @@
           />
         }
       } @else if (activeTab() === 'Favorites') {
-        @if (favoritesLoading()) {
-          <div class="py-16 text-center text-sm text-soft">Cargando favoritos…</div>
-        } @else if (favoritesError()) {
-          <div class="py-16 text-center text-sm text-red-400">
-            No se pudieron cargar los favoritos: {{ favoritesError() }}
-          </div>
+        @if (favStore.loading()) {
+          <app-loading-state label="Cargando favoritos…" />
+        } @else if (favStore.error()) {
+          <app-error-state
+            [message]="'No se pudieron cargar los favoritos: ' + favStore.error()"
+            (retry)="favStore.load()"
+          />
         } @else if (filteredFavorites().length === 0) {
-          <div class="py-16 text-center text-sm text-soft">Aún no tienes canciones favoritas.</div>
+          <app-empty-state icon="heart" message="Aún no tienes canciones favoritas." />
         } @else {
           <app-track-table
             [tracks]="filteredFavorites()"
@@ -109,9 +114,7 @@
           />
         }
       } @else {
-        <div class="py-20 text-center text-sm text-soft">
-          «{{ activeTab() }}» llegará muy pronto.
-        </div>
+        <app-empty-state [message]="'«' + activeTab() + '» llegará muy pronto.'" />
       }
     </section>
 

@@ -8,11 +8,14 @@
       <h2 class="text-[13px] font-bold uppercase tracking-[0.18em] text-foreground">Artistas</h2>
 
       @if (artistsLoading()) {
-        <div class="py-10 text-sm text-soft">Cargando artistas…</div>
+        <app-loading-state label="Cargando artistas…" />
       } @else if (artistsError()) {
-        <div class="py-10 text-sm text-red-400">No se pudieron cargar los artistas: {{ artistsError() }}</div>
+        <app-error-state
+          [message]="'No se pudieron cargar los artistas: ' + artistsError()"
+          (retry)="loadArtists()"
+        />
       } @else if (filteredArtists().length === 0) {
-        <div class="py-10 text-sm text-soft">No hay artistas para mostrar.</div>
+        <app-empty-state icon="users" message="No hay artistas para mostrar." />
       } @else {
         <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
           @for (a of filteredArtists(); track a.id) {
@@ -27,11 +30,14 @@
       <h2 class="text-[13px] font-bold uppercase tracking-[0.18em] text-foreground">Álbumes</h2>
 
       @if (albumsLoading()) {
-        <div class="py-10 text-sm text-soft">Cargando álbumes…</div>
+        <app-loading-state label="Cargando álbumes…" />
       } @else if (albumsError()) {
-        <div class="py-10 text-sm text-red-400">No se pudieron cargar los álbumes: {{ albumsError() }}</div>
+        <app-error-state
+          [message]="'No se pudieron cargar los álbumes: ' + albumsError()"
+          (retry)="loadAlbums()"
+        />
       } @else if (filteredAlbums().length === 0) {
-        <div class="py-10 text-sm text-soft">No hay álbumes para mostrar.</div>
+        <app-empty-state icon="disc-3" message="No hay álbumes para mostrar." />
       } @else {
         <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
           @for (al of filteredAlbums(); track al.id) {

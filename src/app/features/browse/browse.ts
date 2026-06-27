@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppLayout } from '@layout/app-layout/app-layout';
 import { ArtistsService } from '@core/api/artists.service';
@@ -9,17 +16,21 @@ import { ApiError } from '@core/api/api-error';
 import { ArtistTile, AlbumTile } from '@core/models/catalog.model';
 import { ArtistCard } from './components/artist-card/artist-card';
 import { AlbumCard } from './components/album-card/album-card';
+import { LoadingState } from '@shared/ui/loading-state/loading-state';
+import { EmptyState } from '@shared/ui/empty-state/empty-state';
+import { ErrorState } from '@shared/ui/error-state/error-state';
 
 /** Catalog page: browse artists and albums pulled from the backend. */
 @Component({
   selector: 'app-browse',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AppLayout, ArtistCard, AlbumCard],
+  imports: [AppLayout, ArtistCard, AlbumCard, LoadingState, EmptyState, ErrorState],
   templateUrl: './browse.html',
 })
 export class Browse {
   private readonly artistsApi = inject(ArtistsService);
   private readonly albumsApi = inject(AlbumsService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly query = signal('');
 
@@ -52,9 +63,16 @@ export class Browse {
   });
 
   constructor() {
+    this.loadArtists();
+    this.loadAlbums();
+  }
+
+  loadArtists(): void {
+    this.artistsLoading.set(true);
+    this.artistsError.set(null);
     this.artistsApi
       .getAll()
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (list) => {
           this.artists.set(list.map(toArtistTile));
@@ -65,10 +83,14 @@ export class Browse {
           this.artistsLoading.set(false);
         },
       });
+  }
 
+  loadAlbums(): void {
+    this.albumsLoading.set(true);
+    this.albumsError.set(null);
     this.albumsApi
       .getAll()
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (list) => {
           this.albums.set(list.map(toAlbumTile));

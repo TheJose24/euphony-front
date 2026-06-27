@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { AppLayout } from '@layout/app-layout/app-layout';
 import { PlayerStore } from '@core/state/player.store';
-import { AuthStore } from '@core/state/auth.store';
+import { FavoritesStore } from '@core/state/favorites.store';
 import { SongsService } from '@core/api/songs.service';
 import { GenresService } from '@core/api/genres.service';
 import { toTrack } from '@core/api/song.mapper';
@@ -12,7 +12,6 @@ import { ApiError } from '@core/api/api-error';
 import { Track } from '@core/models/track.model';
 import { ArtistsService } from '@core/api/artists.service';
 import { AlbumsService } from '@core/api/albums.service';
-import { FavoritesService } from '@core/api/favorites.service';
 import { toArtistTile } from '@core/api/artist.mapper';
 import { toAlbumTile } from '@core/api/album.mapper';
 import { ArtistTile, AlbumTile } from '@core/models/catalog.model';
@@ -25,6 +24,9 @@ import { PopularArtists } from './components/popular-artists/popular-artists';
 import { RightPanel } from './components/right-panel/right-panel';
 import { ArtistCard } from '@features/browse/components/artist-card/artist-card';
 import { AlbumCard } from '@features/browse/components/album-card/album-card';
+import { LoadingState } from '@shared/ui/loading-state/loading-state';
+import { EmptyState } from '@shared/ui/empty-state/empty-state';
+import { ErrorState } from '@shared/ui/error-state/error-state';
 
 @Component({
   selector: 'app-home',
@@ -39,6 +41,9 @@ import { AlbumCard } from '@features/browse/components/album-card/album-card';
     RightPanel,
     ArtistCard,
     AlbumCard,
+    LoadingState,
+    EmptyState,
+    ErrorState,
   ],
   templateUrl: './home.html',
 })
@@ -48,10 +53,9 @@ export class Home {
   private readonly genresApi = inject(GenresService);
   private readonly artistsApi = inject(ArtistsService);
   private readonly albumsApi = inject(AlbumsService);
-  private readonly favoritesApi = inject(FavoritesService);
-  private readonly auth = inject(AuthStore);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly player = inject(PlayerStore);
+  protected readonly favStore = inject(FavoritesStore);
 
   protected readonly query = signal('');
   /** Raw songs from the API; `tracks` is the mapped UI view, `streamed` the ranked one. */
@@ -129,14 +133,10 @@ export class Home {
     );
   });
 
-  /** Favorites tab = the user's liked songs. */
-  protected readonly favorites = signal<Track[]>([]);
-  protected readonly favoritesLoading = signal(true);
-  protected readonly favoritesError = signal<string | null>(null);
-
+  /** Favorites tab = the user's liked songs, from the shared FavoritesStore. */
   protected readonly filteredFavorites = computed(() => {
     const q = this.query().trim().toLowerCase();
-    const list = this.favorites();
+    const list = this.favStore.tracks();
     if (!q) return list;
     return list.filter((t) =>
       [t.title, t.artist, t.album].some((field) => field.toLowerCase().includes(q)),
@@ -144,12 +144,29 @@ export class Home {
   });
 
   /** Ids of liked songs, passed to every track-table to drive the hearts. */
-  protected readonly likedIds = computed(() => new Set(this.favorites().map((t) => t.id)));
+  protected readonly likedIds = this.favStore.ids;
 
   constructor() {
-    this.songs
+    this.loadSongs();
+    this.loadArtists();
+    this.loadAlbums();
+
+    this.genresApi
       .getAll()
       .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: (list) => this.genres.set(list.map((g) => g.name)),
+        error: () => this.genres.set([]),
+      });
+  }
+
+  /** Songs feed shared by the Playlist and Streams tabs. */
+  loadSongs(): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.songs
+      .getAll()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (songs) => {
           this.songsRaw.set(songs);
@@ -160,18 +177,14 @@ export class Home {
           this.loading.set(false);
         },
       });
+  }
 
-    this.genresApi
-      .getAll()
-      .pipe(takeUntilDestroyed())
-      .subscribe({
-        next: (list) => this.genres.set(list.map((g) => g.name)),
-        error: () => this.genres.set([]),
-      });
-
+  loadArtists(): void {
+    this.artistsLoading.set(true);
+    this.artistsError.set(null);
     this.artistsApi
       .getAll()
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (list) => {
           this.artists.set(list.map(toArtistTile));
@@ -182,10 +195,14 @@ export class Home {
           this.artistsLoading.set(false);
         },
       });
+  }
 
+  loadAlbums(): void {
+    this.albumsLoading.set(true);
+    this.albumsError.set(null);
     this.albumsApi
       .getAll()
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (list) => {
           this.albums.set(list.map(toAlbumTile));
@@ -196,54 +213,37 @@ export class Home {
           this.albumsLoading.set(false);
         },
       });
-
-    this.favoritesApi
-      .getLikedSongs(this.auth.userId())
-      .pipe(takeUntilDestroyed())
-      .subscribe({
-        next: (songs) => {
-          this.favorites.set(songs.map(toTrack));
-          this.favoritesLoading.set(false);
-        },
-        error: (err: ApiError) => {
-          this.favoritesError.set(err.message);
-          this.favoritesLoading.set(false);
-        },
-      });
   }
 
+  /** Play the song the user clicked, queueing the rest of the currently shown list. */
   handleSelect(id: string): void {
-    const track = this.tracks().find((x) => x.id === id);
-    if (!track) return;
-    if (track.id === this.player.current().id) {
+    const list = this.activeList();
+    const index = list.findIndex((t) => t.id === id);
+    if (index < 0) return;
+    if (list[index].id === this.player.current().id) {
       this.player.togglePlay();
-    } else {
-      this.player.setTrack(track);
-      this.router.navigate(['/player']);
+      return;
+    }
+    this.player.setQueue(list, index);
+    this.router.navigate(['/player']);
+  }
+
+  /** The track list shown by the active tab — drives the play queue. */
+  private activeList(): Track[] {
+    switch (this.activeTab()) {
+      case 'Streams':
+        return this.streamed();
+      case 'Favorites':
+        return this.filteredFavorites();
+      default:
+        return this.filtered();
     }
   }
 
-  /** Like/unlike a song against the backend; optimistic update with revert on error. */
+  /** Like/unlike a song; the shared store handles the backend call + optimistic revert. */
   onToggleFavorite(id: string): void {
-    const userId = this.auth.userId();
-    const songId = Number(id);
-    const prev = this.favorites();
-    const isLiked = prev.some((t) => t.id === id);
-
-    if (isLiked) {
-      this.favorites.set(prev.filter((t) => t.id !== id));
-      this.favoritesApi
-        .unlikeSong(userId, songId)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({ error: () => this.favorites.set(prev) });
-    } else {
-      const track = this.tracks().find((t) => t.id === id);
-      if (!track) return;
-      this.favorites.set([...prev, track]);
-      this.favoritesApi
-        .likeSong(userId, songId)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({ error: () => this.favorites.set(prev) });
-    }
+    const track =
+      this.tracks().find((t) => t.id === id) ?? this.favStore.tracks().find((t) => t.id === id);
+    if (track) this.favStore.toggle(track);
   }
 }

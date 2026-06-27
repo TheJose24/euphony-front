@@ -18,6 +18,11 @@ export const routes: Routes = [
     loadComponent: () => import('@features/browse/browse').then((m) => m.Browse),
   },
   {
+    path: 'search',
+    title: 'Buscar · Euphony',
+    loadComponent: () => import('@features/search/search').then((m) => m.Search),
+  },
+  {
     path: 'album/:id',
     title: 'Álbum · Euphony',
     loadComponent: () => import('@features/album-detail/album-detail').then((m) => m.AlbumDetail),
@@ -26,6 +31,17 @@ export const routes: Routes = [
     path: 'artist/:id',
     title: 'Artista · Euphony',
     loadComponent: () => import('@features/artist-detail/artist-detail').then((m) => m.ArtistDetail),
+  },
+  {
+    path: 'library',
+    title: 'Tu biblioteca · Euphony',
+    loadComponent: () => import('@features/library/library').then((m) => m.Library),
+  },
+  {
+    path: 'playlist/:id',
+    title: 'Playlist · Euphony',
+    loadComponent: () =>
+      import('@features/playlists/playlist-detail/playlist-detail').then((m) => m.PlaylistDetail),
   },
   {
     path: 'player',

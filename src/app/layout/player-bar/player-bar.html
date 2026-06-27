@@ -1,24 +1,37 @@
 <footer
-  class="sticky bottom-0 z-player h-[112px] w-full border-t border-divider bg-surface-player px-4 md:px-6 flex items-center gap-4"
+  class="sticky bottom-0 z-player flex h-[72px] w-full items-center gap-3 border-t border-divider bg-surface-player px-4 md:h-[112px] md:gap-4 md:px-6"
 >
-  <!-- Left: track info -->
-  <div class="flex items-center gap-3 w-[280px] min-w-0 shrink-0">
-    <img
-      [src]="player.current().cover"
-      alt=""
-      width="64"
-      height="64"
-      loading="lazy"
-      class="h-16 w-16 rounded-md object-cover"
-    />
-    <div class="min-w-0">
-      <div class="truncate text-[14px] font-semibold text-foreground">{{ player.current().title }}</div>
-      <div class="truncate text-[12px] text-soft">{{ player.current().artist }}</div>
-    </div>
+  <!-- Mobile-only progress indicator along the top edge (full scrubber lives on /player). -->
+  <div
+    class="absolute inset-x-0 top-0 h-0.5 bg-primary md:hidden"
+    [style.width.%]="player.progressPct()"
+    aria-hidden="true"
+  ></div>
+
+  <!-- Left: track info — tappable to open the full player -->
+  <div class="flex min-w-0 flex-1 items-center gap-3 md:w-[280px] md:flex-none md:shrink-0">
+    <a
+      routerLink="/player"
+      class="flex min-w-0 flex-1 items-center gap-3"
+      aria-label="Abrir reproductor"
+    >
+      <img
+        [src]="player.current().cover"
+        alt=""
+        width="64"
+        height="64"
+        loading="lazy"
+        class="h-12 w-12 shrink-0 rounded-md object-cover md:h-16 md:w-16"
+      />
+      <div class="min-w-0">
+        <div class="truncate text-[14px] font-semibold text-foreground">{{ player.current().title }}</div>
+        <div class="truncate text-[12px] text-soft">{{ player.current().artist }}</div>
+      </div>
+    </a>
     <button
       type="button"
       (click)="fav.toggle(player.current())"
-      class="ml-2 shrink-0 transition-base"
+      class="shrink-0 transition-base"
       [class]="fav.isLiked(player.current().id) ? 'text-dot-green' : 'text-soft hover:text-foreground'"
       [attr.aria-label]="fav.isLiked(player.current().id) ? 'Quitar de favoritos' : 'Añadir a favoritos'"
       [attr.aria-pressed]="fav.isLiked(player.current().id)"
@@ -31,8 +44,8 @@
     </button>
   </div>
 
-  <!-- Center: controls -->
-  <div class="flex-1 flex flex-col items-center gap-2 min-w-0">
+  <!-- Center: full controls (tablet/desktop only) -->
+  <div class="hidden min-w-0 flex-1 flex-col items-center gap-2 md:flex">
     <div class="flex items-center gap-5">
       <button
         type="button"
@@ -61,9 +74,14 @@
         type="button"
         (click)="player.togglePlay()"
         class="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black hover:scale-105 transition-base"
-        [attr.aria-label]="player.isPlaying() ? 'Pausar' : 'Reproducir'"
+        [attr.aria-label]="
+          player.isLoading() ? 'Cargando' : player.isPlaying() ? 'Pausar' : 'Reproducir'
+        "
+        [attr.aria-busy]="player.isLoading()"
       >
-        @if (player.isPlaying()) {
+        @if (player.isLoading()) {
+          <lucide-icon name="loader-circle" class="h-5 w-5 animate-spin" aria-hidden="true"></lucide-icon>
+        } @else if (player.isPlaying()) {
           <lucide-icon name="pause" class="h-5 w-5 fill-current"></lucide-icon>
         } @else {
           <lucide-icon name="play" class="h-5 w-5 fill-current ml-0.5"></lucide-icon>
@@ -122,7 +140,26 @@
     </div>
   </div>
 
-  <!-- Right: extras -->
+  <!-- Mobile-only play/pause (full transport is one tap away on /player) -->
+  <button
+    type="button"
+    (click)="player.togglePlay()"
+    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-black transition-base md:hidden"
+    [attr.aria-label]="
+      player.isLoading() ? 'Cargando' : player.isPlaying() ? 'Pausar' : 'Reproducir'
+    "
+    [attr.aria-busy]="player.isLoading()"
+  >
+    @if (player.isLoading()) {
+      <lucide-icon name="loader-circle" class="h-5 w-5 animate-spin" aria-hidden="true"></lucide-icon>
+    } @else if (player.isPlaying()) {
+      <lucide-icon name="pause" class="h-5 w-5 fill-current"></lucide-icon>
+    } @else {
+      <lucide-icon name="play" class="ml-0.5 h-5 w-5 fill-current"></lucide-icon>
+    }
+  </button>
+
+  <!-- Right: extras (desktop only) -->
   <div class="hidden md:flex items-center gap-3 w-[200px] justify-end shrink-0">
     <a
       routerLink="/player"

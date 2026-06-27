@@ -1,12 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
-import { AuthStore } from '@core/state/auth.store';
-import { FavoritesService } from '@core/api/favorites.service';
-import { toAlbumTile } from '@core/api/album.mapper';
-import { AlbumTile } from '@core/models/catalog.model';
+import { AlbumFavoritesStore } from '@core/state/album-favorites.store';
 
+/** Right rail: the user's favorite albums (from the shared store) + a premium promo. */
 @Component({
   selector: 'app-right-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -14,22 +11,5 @@ import { AlbumTile } from '@core/models/catalog.model';
   templateUrl: './right-panel.html',
 })
 export class RightPanel {
-  private readonly favoritesApi = inject(FavoritesService);
-  private readonly auth = inject(AuthStore);
-
-  protected readonly albums = signal<AlbumTile[]>([]);
-  protected readonly loading = signal(true);
-
-  constructor() {
-    this.favoritesApi
-      .getFavoriteAlbums(this.auth.userId())
-      .pipe(takeUntilDestroyed())
-      .subscribe({
-        next: (list) => {
-          this.albums.set(list.map(toAlbumTile));
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false),
-      });
-  }
+  protected readonly albumFav = inject(AlbumFavoritesStore);
 }

@@ -1,0 +1,72 @@
+<app-layout>
+  <div class="animate-fade-in">
+    @if (loading()) {
+      <div class="px-6 md:px-10">
+        <app-loading-state label="Cargando playlist…" />
+      </div>
+    } @else if (error()) {
+      <app-error-state [message]="error() ?? ''" (retry)="retry()" />
+    } @else if (playlist(); as pl) {
+      <!-- Header -->
+      <section
+        class="flex flex-col items-center gap-6 px-6 pb-6 pt-10 md:flex-row md:items-end md:px-10"
+      >
+        @if (pl.coverImage) {
+          <img
+            [src]="pl.coverImage"
+            [alt]="pl.name"
+            class="h-48 w-48 rounded-lg object-cover shadow-2xl shadow-black/40"
+          />
+        } @else {
+          <div
+            class="flex h-48 w-48 items-center justify-center rounded-lg bg-gradient-to-br from-surface-2 to-surface-3 text-dim"
+          >
+            <lucide-icon name="list-music" class="h-16 w-16"></lucide-icon>
+          </div>
+        }
+        <div class="min-w-0 text-center md:text-left">
+          <div class="text-[12px] font-bold uppercase tracking-[0.2em] text-soft">Playlist</div>
+          <h1
+            class="mt-2 font-display text-4xl font-extrabold tracking-tight text-foreground md:text-5xl"
+          >
+            {{ pl.name }}
+          </h1>
+          @if (pl.description) {
+            <p class="mt-3 max-w-[640px] text-[14px] leading-relaxed text-soft">
+              {{ pl.description }}
+            </p>
+          }
+          <p class="mt-3 text-[14px] text-soft">{{ tracks().length }} canción(es)</p>
+          <button
+            type="button"
+            (click)="playAll()"
+            [disabled]="tracks().length === 0"
+            class="mt-5 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-[14px] font-semibold text-primary-foreground transition-base hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+          >
+            <lucide-icon name="play" class="h-4 w-4 fill-current"></lucide-icon>
+            Reproducir
+          </button>
+        </div>
+      </section>
+
+      <!-- Songs -->
+      <div class="px-6 pb-16 md:px-10">
+        @if (tracks().length === 0) {
+          <app-empty-state
+            icon="music-2"
+            message="Esta playlist está vacía. Añade canciones desde el menú ⋯ de cualquier canción."
+          />
+        } @else {
+          <app-track-table
+            [tracks]="tracks()"
+            [activeId]="player.current().id"
+            [isPlaying]="player.isPlaying()"
+            [likedIds]="favStore.ids()"
+            (select)="handleSelect($event)"
+            (favoriteToggle)="onToggleFavorite($event)"
+          />
+        }
+      </div>
+    }
+  </div>
+</app-layout>

@@ -15,6 +15,24 @@
         <lucide-icon name="disc-3" class="h-12 w-12"></lucide-icon>
       </div>
     }
+    <button
+      type="button"
+      (click)="$event.preventDefault(); $event.stopPropagation(); albumFav.toggle(album())"
+      class="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-background/70 transition-base"
+      [class]="
+        albumFav.isFavorite(album().id)
+          ? 'text-primary opacity-100'
+          : 'text-foreground opacity-0 group-hover:opacity-100 hover:text-primary'
+      "
+      [attr.aria-label]="albumFav.isFavorite(album().id) ? 'Quitar de favoritos' : 'Guardar álbum'"
+      [attr.aria-pressed]="albumFav.isFavorite(album().id)"
+    >
+      <lucide-icon
+        name="heart"
+        class="h-4 w-4"
+        [class.fill-primary]="albumFav.isFavorite(album().id)"
+      ></lucide-icon>
+    </button>
   </div>
   <div class="min-w-0">
     <div class="truncate text-[14px] font-semibold text-foreground">{{ album().title }}</div>

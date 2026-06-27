@@ -2,13 +2,13 @@
   <div>
     <h3 class="px-2 text-[13px] font-bold uppercase tracking-[0.18em] text-foreground">Favorite Album</h3>
 
-    @if (loading()) {
+    @if (albumFav.loading()) {
       <div class="mt-3 px-2 text-[13px] text-soft">Cargando…</div>
-    } @else if (albums().length === 0) {
+    } @else if (albumFav.albums().length === 0) {
       <div class="mt-3 px-2 text-[13px] text-soft">Aún no tienes álbumes favoritos.</div>
     } @else {
       <div class="mt-3 space-y-1">
-        @for (album of albums(); track album.id) {
+        @for (album of albumFav.albums(); track album.id) {
           <a
             [routerLink]="['/album', album.id]"
             class="group flex w-full items-center gap-3 rounded-lg p-2 transition-base hover:bg-surface-2 hover:translate-x-1"

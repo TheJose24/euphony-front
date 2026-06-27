@@ -16,4 +16,6 @@ export class NavItem {
   readonly icon = input.required<string>();
   readonly label = input.required<string>();
   readonly to = input<string>();
+  /** Optional query params for the router link (e.g. preselecting a library tab). */
+  readonly queryParams = input<Record<string, string>>();
 }

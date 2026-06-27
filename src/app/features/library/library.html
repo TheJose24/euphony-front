@@ -1,0 +1,112 @@
+<app-layout [(query)]="query">
+  <div class="animate-fade-in space-y-6 px-6 py-8 md:px-10">
+    <div>
+      <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Tu biblioteca</h1>
+      <p class="mt-1 text-sm text-soft">Tus canciones, álbumes, playlists y artistas</p>
+    </div>
+
+    <app-content-tabs [tabs]="tabs" [active]="activeTab()" (select)="activeTab.set($any($event))" />
+
+    @switch (activeTab()) {
+      @case ('Canciones') {
+        @if (favStore.loading()) {
+          <app-loading-state label="Cargando tus canciones…" />
+        } @else if (favStore.error()) {
+          <app-error-state
+            [message]="'No se pudieron cargar tus favoritos: ' + favStore.error()"
+            (retry)="favStore.load()"
+          />
+        } @else if (filteredLikes().length === 0) {
+          <app-empty-state icon="heart" message="Aún no tienes canciones favoritas." />
+        } @else {
+          <app-track-table
+            [tracks]="filteredLikes()"
+            [activeId]="player.current().id"
+            [isPlaying]="player.isPlaying()"
+            [showHeader]="false"
+            [likedIds]="favStore.ids()"
+            (select)="handleSelect($event)"
+            (favoriteToggle)="onToggleFavorite($event)"
+          />
+        }
+      }
+
+      @case ('Álbumes') {
+        @if (albumFav.loading()) {
+          <app-loading-state label="Cargando tus álbumes…" />
+        } @else if (albumFav.error()) {
+          <app-error-state
+            [message]="'No se pudieron cargar tus álbumes: ' + albumFav.error()"
+            (retry)="albumFav.load()"
+          />
+        } @else if (filteredAlbums().length === 0) {
+          <app-empty-state icon="disc-3" message="Aún no tienes álbumes favoritos." />
+        } @else {
+          <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+            @for (al of filteredAlbums(); track al.id) {
+              <app-album-card [album]="al" />
+            }
+          </div>
+        }
+      }
+
+      @case ('Playlists') {
+        @if (playlistsStore.loading()) {
+          <app-loading-state label="Cargando tus playlists…" />
+        } @else if (playlistsStore.error()) {
+          <app-error-state
+            [message]="'No se pudieron cargar tus playlists: ' + playlistsStore.error()"
+            (retry)="playlistsStore.load()"
+          />
+        } @else if (filteredPlaylists().length === 0) {
+          <app-empty-state
+            icon="list-music"
+            message="No tienes playlists. Créala desde el panel lateral con el botón +."
+          />
+        } @else {
+          <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+            @for (pl of filteredPlaylists(); track pl.playlistId) {
+              <a
+                [routerLink]="['/playlist', pl.playlistId]"
+                class="group flex flex-col gap-3 rounded-xl bg-surface-1/40 p-4 transition-base hover:bg-surface-2"
+              >
+                <div
+                  class="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-surface-2 to-surface-3"
+                >
+                  @if (pl.coverImage) {
+                    <img
+                      [src]="pl.coverImage"
+                      [alt]="pl.name"
+                      loading="lazy"
+                      class="h-full w-full object-cover transition-base group-hover:scale-105"
+                    />
+                  } @else {
+                    <lucide-icon name="list-music" class="h-12 w-12 text-dim"></lucide-icon>
+                  }
+                </div>
+                <div class="min-w-0">
+                  <div class="truncate text-[14px] font-semibold text-foreground">{{ pl.name }}</div>
+                  <div class="truncate text-[12px] text-soft">{{ pl.songCount }} canción(es)</div>
+                </div>
+              </a>
+            }
+          </div>
+        }
+      }
+
+      @case ('Artistas') {
+        @if (followStore.loading()) {
+          <app-loading-state label="Cargando tus artistas…" />
+        } @else if (followedArtists().length === 0) {
+          <app-empty-state icon="users" message="Aún no sigues a ningún artista." />
+        } @else {
+          <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+            @for (a of followedArtists(); track a.id) {
+              <app-artist-card [artist]="a" />
+            }
+          </div>
+        }
+      }
+    }
+  </div>
+</app-layout>

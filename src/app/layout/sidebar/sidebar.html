@@ -7,7 +7,12 @@
   <nav class="flex-1 overflow-y-auto px-3 py-5 space-y-6">
     <div class="space-y-0.5">
       @for (item of mainNav; track item.label) {
-        <app-nav-item [icon]="item.icon" [label]="item.label" [to]="item.to" />
+        <app-nav-item
+          [icon]="item.icon"
+          [label]="item.label"
+          [to]="item.to"
+          [queryParams]="item.queryParams"
+        />
       }
     </div>
 
@@ -23,22 +28,82 @@
     <div class="h-px bg-divider mx-3"></div>
 
     <div class="space-y-2">
-      <div class="px-3 text-[11px] font-semibold tracking-[0.2em] text-dim">MY PLAYLIST</div>
-      <div class="space-y-0.5">
-        @for (pl of playlists; track pl.label) {
-          <button
-            type="button"
-            class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-[14px] font-medium text-soft transition-base hover:text-foreground"
-          >
-            <span class="h-2 w-2 rounded-full" [class]="pl.color"></span>
-            {{ pl.label }}
-          </button>
-        }
+      <div class="flex items-center justify-between px-3">
+        <span class="text-[11px] font-semibold tracking-[0.2em] text-dim">MY PLAYLIST</span>
+        <button
+          type="button"
+          (click)="openCreate()"
+          class="text-dim transition-base hover:text-foreground"
+          aria-label="Crear playlist"
+        >
+          <lucide-icon name="plus" class="h-4 w-4"></lucide-icon>
+        </button>
       </div>
+
+      @if (playlistsStore.loading()) {
+        <div class="px-3 py-1 text-[13px] text-dim">Cargando…</div>
+      } @else if (playlistsStore.isEmpty()) {
+        <div class="px-3 py-1 text-[13px] text-dim">Crea tu primera playlist con +</div>
+      } @else {
+        <div class="space-y-0.5">
+          @for (pl of playlistsStore.playlists(); track pl.playlistId; let i = $index) {
+            <a
+              [routerLink]="['/playlist', pl.playlistId]"
+              routerLinkActive="!text-primary"
+              class="group flex w-full items-center gap-3 rounded-md px-3 py-2 text-[14px] font-medium text-soft transition-base hover:text-foreground"
+            >
+              <span class="h-2 w-2 shrink-0 rounded-full" [class]="dotColor(i)"></span>
+              <span class="min-w-0 flex-1 truncate">{{ pl.name }}</span>
+              <button
+                type="button"
+                (click)="remove(pl.playlistId, $event)"
+                class="shrink-0 text-dim opacity-0 transition-base hover:text-destructive group-hover:opacity-100"
+                aria-label="Eliminar playlist"
+              >
+                <lucide-icon name="trash-2" class="h-4 w-4"></lucide-icon>
+              </button>
+            </a>
+          }
+        </div>
+      }
     </div>
   </nav>
 
   <div class="p-3 border-t border-divider">
     <app-nav-item icon="settings" label="Setting" />
   </div>
+
+  <app-modal [open]="creating()" title="Nueva playlist" (close)="closeCreate()">
+    <form (submit)="$event.preventDefault(); submitCreate()" class="space-y-4">
+      <div>
+        <label for="pl-name" class="mb-2 block text-[13px] font-semibold text-foreground">Nombre</label>
+        <input
+          id="pl-name"
+          #nameInput
+          [value]="newName()"
+          (input)="newName.set(nameInput.value)"
+          placeholder="Mi nueva playlist"
+          autocomplete="off"
+          class="h-11 w-full rounded-md border border-divider bg-surface-3 px-4 text-[14px] text-foreground outline-none transition-base placeholder:text-dim focus:border-primary"
+        />
+        <p class="mt-2 text-[12px] text-dim">Mínimo 3 caracteres.</p>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button
+          type="button"
+          (click)="closeCreate()"
+          class="rounded-full border border-divider px-4 py-2 text-[13px] font-semibold text-soft transition-base hover:text-foreground"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          [disabled]="newName().trim().length < 3"
+          class="rounded-full bg-primary px-5 py-2 text-[13px] font-semibold text-primary-foreground transition-base hover:bg-primary-glow disabled:opacity-50"
+        >
+          Crear
+        </button>
+      </div>
+    </form>
+  </app-modal>
 </aside>

@@ -1,0 +1,71 @@
+<app-layout [(query)]="query">
+  <div class="animate-fade-in space-y-8 px-6 py-8 md:px-10">
+    @if (loading()) {
+      <app-loading-state label="Cargando el catálogo…" />
+    } @else if (error()) {
+      <app-error-state
+        [message]="'No se pudo cargar la búsqueda: ' + error()"
+        (retry)="load()"
+      />
+    } @else if (!hasQuery()) {
+      <!-- Prompt: nothing typed yet -->
+      <div class="flex flex-col items-center justify-center gap-4 py-20 text-center">
+        <div class="flex h-16 w-16 items-center justify-center rounded-full bg-surface-2 text-soft">
+          <lucide-icon name="search" class="h-7 w-7" [strokeWidth]="1.75"></lucide-icon>
+        </div>
+        <div>
+          <p class="text-[16px] font-semibold text-foreground">Busca en Euphony</p>
+          <p class="mt-1 text-sm text-soft">Canciones, artistas y álbumes en un solo lugar.</p>
+        </div>
+        <a
+          routerLink="/browse"
+          class="rounded-full border border-divider px-5 py-2 text-[13px] font-semibold text-foreground transition-base hover:border-primary"
+        >
+          Explorar el catálogo
+        </a>
+      </div>
+    } @else if (total() === 0) {
+      <app-empty-state icon="search" [message]="'Sin resultados para «' + query().trim() + '».'" />
+    } @else {
+      <!-- Songs -->
+      @if (songs().length) {
+        <section>
+          <h2 class="text-[13px] font-bold uppercase tracking-[0.18em] text-foreground">Canciones</h2>
+          <app-track-table
+            [tracks]="songs()"
+            [activeId]="player.current().id"
+            [isPlaying]="player.isPlaying()"
+            [showHeader]="false"
+            [likedIds]="favStore.ids()"
+            (select)="handleSelect($event)"
+            (favoriteToggle)="onToggleFavorite($event)"
+          />
+        </section>
+      }
+
+      <!-- Artists -->
+      @if (artists().length) {
+        <section>
+          <h2 class="text-[13px] font-bold uppercase tracking-[0.18em] text-foreground">Artistas</h2>
+          <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+            @for (a of artists(); track a.id) {
+              <app-artist-card [artist]="a" />
+            }
+          </div>
+        </section>
+      }
+
+      <!-- Albums -->
+      @if (albums().length) {
+        <section>
+          <h2 class="text-[13px] font-bold uppercase tracking-[0.18em] text-foreground">Álbumes</h2>
+          <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+            @for (al of albums(); track al.id) {
+              <app-album-card [album]="al" />
+            }
+          </div>
+        </section>
+      }
+    }
+  </div>
+</app-layout>

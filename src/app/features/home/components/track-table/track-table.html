@@ -102,17 +102,24 @@
           @if (isMenuOpen(t.id)) {
             <div
               (click)="$event.stopPropagation()"
-              class="absolute right-0 top-7 z-20 w-44 rounded-lg border border-divider bg-surface-2 py-1.5 shadow-2xl animate-fade-in"
+              class="absolute right-0 top-7 z-dropdown w-48 rounded-lg border border-divider bg-surface-2 py-1.5 shadow-2xl animate-fade-in"
             >
-              @for (opt of menuOptions; track opt) {
-                <button
-                  type="button"
-                  (click)="closeMenu()"
-                  class="block w-full px-3 py-2 text-left text-[13px] text-soft transition-base hover:bg-surface-3 hover:text-foreground"
-                >
-                  {{ opt }}
-                </button>
-              }
+              <button
+                type="button"
+                (click)="$event.stopPropagation(); addToQueue(t.id)"
+                class="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-soft transition-base hover:bg-surface-3 hover:text-foreground"
+              >
+                <lucide-icon name="list-music" class="h-4 w-4"></lucide-icon>
+                Añadir a la cola
+              </button>
+              <button
+                type="button"
+                (click)="$event.stopPropagation(); addToPlaylist(t.id)"
+                class="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-soft transition-base hover:bg-surface-3 hover:text-foreground"
+              >
+                <lucide-icon name="plus" class="h-4 w-4"></lucide-icon>
+                Añadir a playlist
+              </button>
             </div>
           }
         </div>

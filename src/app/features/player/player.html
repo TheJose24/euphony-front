@@ -207,12 +207,13 @@
           <p class="mt-4 text-sm text-soft">No hay más canciones en la cola.</p>
         } @else {
           <ul class="mt-4 space-y-1">
-            @for (t of player.upNext(); track t.id; let i = $index) {
-              <li>
+            @for (t of player.upNext(); track t.id; let i = $index, c = $count) {
+              <li class="group flex items-center rounded-lg transition-base hover:bg-surface-2">
                 <button
                   type="button"
                   (click)="player.jumpTo(player.index() + 1 + i)"
-                  class="group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-base hover:bg-surface-2"
+                  class="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-2 text-left"
+                  [attr.aria-label]="'Reproducir ' + t.title + ' de ' + t.artist"
                 >
                   <span class="w-5 shrink-0 text-center text-[13px] tabular-nums text-dim">{{
                     i + 1
@@ -231,8 +232,44 @@
                     }}</span>
                     <span class="block truncate text-[12px] text-soft">{{ t.artist }}</span>
                   </span>
-                  <span class="shrink-0 text-[12px] tabular-nums text-soft">{{ t.duration }}</span>
                 </button>
+                <!-- Duration at rest; queue actions on hover / keyboard focus (always shown on touch). -->
+                <div class="relative flex h-9 w-[104px] shrink-0 items-center justify-end pr-2">
+                  <span
+                    class="text-[12px] tabular-nums text-soft transition-base group-hover:opacity-0 group-focus-within:opacity-0 [@media(hover:none)]:opacity-0"
+                    >{{ t.duration }}</span
+                  >
+                  <div
+                    class="absolute inset-y-0 right-1 flex items-center gap-0.5 opacity-0 transition-base group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
+                  >
+                    <button
+                      type="button"
+                      (click)="player.moveTo(player.index() + 1 + i, player.index() + i)"
+                      [disabled]="i === 0"
+                      class="flex h-7 w-7 items-center justify-center rounded-md text-soft transition-base hover:bg-surface-3 hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-soft"
+                      aria-label="Subir en la cola"
+                    >
+                      <lucide-icon name="chevron-up" class="h-4 w-4"></lucide-icon>
+                    </button>
+                    <button
+                      type="button"
+                      (click)="player.moveTo(player.index() + 1 + i, player.index() + 2 + i)"
+                      [disabled]="i === c - 1"
+                      class="flex h-7 w-7 items-center justify-center rounded-md text-soft transition-base hover:bg-surface-3 hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-soft"
+                      aria-label="Bajar en la cola"
+                    >
+                      <lucide-icon name="chevron-down" class="h-4 w-4"></lucide-icon>
+                    </button>
+                    <button
+                      type="button"
+                      (click)="player.removeAt(player.index() + 1 + i)"
+                      class="flex h-7 w-7 items-center justify-center rounded-md text-soft transition-base hover:bg-surface-3 hover:text-foreground"
+                      aria-label="Quitar de la cola"
+                    >
+                      <lucide-icon name="x" class="h-4 w-4"></lucide-icon>
+                    </button>
+                  </div>
+                </div>
               </li>
             }
           </ul>

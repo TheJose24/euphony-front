@@ -96,6 +96,27 @@ export class PlayerStore {
     this._queue.update((q) => [...q, track]);
   }
 
+  /** Remove an up-next track from the queue. The currently-playing track can't be removed here. */
+  removeAt(index: number): void {
+    if (index <= this._index() || index >= this._queue().length) return;
+    this._queue.update((q) => q.filter((_, i) => i !== index));
+  }
+
+  /** Reorder an up-next track to a new position, keeping it after the current one. */
+  moveTo(from: number, to: number): void {
+    const cur = this._index();
+    const len = this._queue().length;
+    if (from <= cur || from >= len) return;
+    to = Math.min(Math.max(to, cur + 1), len - 1);
+    if (to === from) return;
+    this._queue.update((q) => {
+      const next = [...q];
+      const [item] = next.splice(from, 1);
+      next.splice(to, 0, item);
+      return next;
+    });
+  }
+
   togglePlay(): void {
     if (!isRealSong(this.current())) return; // nothing real to play (silent placeholder)
     if (this.audio.paused) {

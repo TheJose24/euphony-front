@@ -1,0 +1,24 @@
+# Dependencias y artefactos (se regeneran dentro del build)
+node_modules
+dist
+.angular
+
+# VCS y tooling
+.git
+.gitignore
+.github
+.vscode
+.idea
+.claude
+
+# Docs internas y archivos de Docker (no afectan al build de la app)
+docs_backend
+Dockerfile
+.dockerignore
+docker-compose.yml
+*.md
+
+# Logs / temporales
+*.log
+coverage
+.DS_Store

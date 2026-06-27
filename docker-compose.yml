@@ -1,0 +1,15 @@
+services:
+  web:
+    build: .
+    image: euphony-design:latest
+    container_name: euphony-design
+    ports:
+      # host:contenedor — cambia 8080 si tu reverse-proxy del VPS usa otro puerto
+      - "8080:80"
+    restart: unless-stopped
+    networks:
+      - proxy-network
+
+networks:
+  proxy-network:
+    external: true

@@ -6,7 +6,16 @@ module.exports = {
     container: { center: true, padding: '2rem', screens: { '2xl': '1400px' } },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        // Stacks definidos una sola vez como CSS vars en src/styles.css (:root).
+        sans: ['var(--font-sans)'],
+        // Display face reserved for large titles (hero, now-playing, .display-title).
+        display: ['var(--font-display)'],
+      },
+      // Semantic z-index scale — see design-system/MASTER.md §5.
+      zIndex: {
+        dropdown: '20',
+        player: '30',
+        modal: '50',
       },
       colors: {
         border: 'hsl(var(--border))',
@@ -48,6 +57,7 @@ module.exports = {
           1: 'hsl(var(--surface-1))',
           2: 'hsl(var(--surface-2))',
           3: 'hsl(var(--surface-3))',
+          player: 'hsl(var(--surface-player))',
         },
         divider: 'hsl(var(--divider))',
         dot: {

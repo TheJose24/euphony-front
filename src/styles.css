@@ -14,6 +14,7 @@
     --surface-1: 187 18% 4%;        /* #050707 sidebar */
     --surface-2: 190 8% 10%;        /* #171B1C cards/inputs */
     --surface-3: 180 7% 14%;        /* hover */
+    --surface-player: 180 7% 9%;    /* #151818 player bar */
     --divider: 180 11% 14%;         /* #202525 */
 
     --card: 190 8% 10%;
@@ -53,6 +54,12 @@
 
     --radius: 0.75rem;
 
+    /* Familias tipográficas — única fuente de verdad (espejada en tailwind.config.js).
+       Inter (humanista) carga toda la UI; Bricolage Grotesque (grotesca de carácter) se
+       reserva a los titulares grandes: contraste por eje, no dos sans casi iguales. */
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-display: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
+
     --shadow-glow: 0 0 32px hsl(var(--primary) / 0.45);
     --transition-base: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -64,8 +71,9 @@
   app-root { @apply block h-full; }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-feature-settings: 'cv11', 'ss01';
+    font-kerning: normal;
   }
 
   ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -79,6 +87,24 @@
     display: inline-flex;
     line-height: 0;
   }
+
+  /* Accessible keyboard focus: a turquoise ring on anything focused via keyboard.
+     Mouse/touch focus stays clean (:focus-visible only). */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Respect users who ask for less motion: collapse animations/transitions. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer utilities {
@@ -87,14 +113,18 @@
   .bg-surface-1 { background-color: hsl(var(--surface-1)); }
   .bg-surface-2 { background-color: hsl(var(--surface-2)); }
   .bg-surface-3 { background-color: hsl(var(--surface-3)); }
+  .bg-surface-player { background-color: hsl(var(--surface-player)); }
   .border-divider { border-color: hsl(var(--divider)); }
   .shadow-glow { box-shadow: var(--shadow-glow); }
   .transition-base { transition: var(--transition-base); }
 
   .display-title {
-    font-size: clamp(56px, 8vw, 104px);
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-size: clamp(3.5rem, 7.5vw, 6rem); /* 56px → 96px, en rem para respetar el zoom */
     font-weight: 800;
     letter-spacing: -0.04em;
     line-height: 0.95;
+    text-wrap: balance;
   }
 }

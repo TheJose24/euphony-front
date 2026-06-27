@@ -1,0 +1,12 @@
+<nav class="flex items-stretch border-t border-divider bg-surface-1 lg:hidden" aria-label="Navegación principal">
+  @for (item of items; track item.to) {
+    <a
+      [routerLink]="item.to"
+      routerLinkActive="!text-primary"
+      class="flex flex-1 flex-col items-center justify-center gap-1 py-2.5 text-soft transition-base hover:text-foreground"
+    >
+      <lucide-icon [name]="item.icon" class="h-5 w-5" [strokeWidth]="1.75"></lucide-icon>
+      <span class="text-[11px] font-medium">{{ item.label }}</span>
+    </a>
+  }
+</nav>

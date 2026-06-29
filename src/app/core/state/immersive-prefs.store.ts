@@ -11,14 +11,34 @@ import { Injectable, computed, signal } from '@angular/core';
  */
 export type ImmersiveIntensity = 'off' | 'subtle' | 'full';
 
+/**
+ * How the camera is driven:
+ * - `auto`   → the engine's slow cinematic drift (default; suppressed under reduced motion).
+ * - `manual` → the user orbits/zooms via OrbitControls; the drift is off.
+ */
+export type ImmersiveCameraMode = 'auto' | 'manual';
+
+/** What the 3D browsing shelf shows (`off` = hidden). */
+export type ImmersiveShelfSource = 'off' | 'queue' | 'playlists';
+
 const STORAGE_KEY = 'euphony.immersive';
 
 interface ImmersivePrefs {
   enabled: boolean;
   intensity: ImmersiveIntensity;
+  cameraMode: ImmersiveCameraMode;
+  /** Persisted manual framing `[posX,posY,posZ, targetX,targetY,targetZ]`, or null = default. */
+  cameraState: number[] | null;
+  shelfSource: ImmersiveShelfSource;
 }
 
-const DEFAULTS: ImmersivePrefs = { enabled: true, intensity: 'full' };
+const DEFAULTS: ImmersivePrefs = {
+  enabled: true,
+  intensity: 'full',
+  cameraMode: 'auto',
+  cameraState: null,
+  shelfSource: 'off',
+};
 
 /** Read persisted prefs, tolerating absent/corrupt storage. */
 function restore(): ImmersivePrefs {
@@ -30,7 +50,23 @@ function restore(): ImmersivePrefs {
       p.intensity === 'off' || p.intensity === 'subtle' || p.intensity === 'full'
         ? p.intensity
         : DEFAULTS.intensity;
-    return { enabled: typeof p.enabled === 'boolean' ? p.enabled : DEFAULTS.enabled, intensity };
+    const cameraMode: ImmersiveCameraMode =
+      p.cameraMode === 'auto' || p.cameraMode === 'manual' ? p.cameraMode : DEFAULTS.cameraMode;
+    const cameraState =
+      Array.isArray(p.cameraState) && p.cameraState.length === 6 && p.cameraState.every((n) => typeof n === 'number')
+        ? p.cameraState
+        : null;
+    const shelfSource: ImmersiveShelfSource =
+      p.shelfSource === 'off' || p.shelfSource === 'queue' || p.shelfSource === 'playlists'
+        ? p.shelfSource
+        : DEFAULTS.shelfSource;
+    return {
+      enabled: typeof p.enabled === 'boolean' ? p.enabled : DEFAULTS.enabled,
+      intensity,
+      cameraMode,
+      cameraState,
+      shelfSource,
+    };
   } catch {
     return { ...DEFAULTS };
   }
@@ -43,11 +79,18 @@ function restore(): ImmersivePrefs {
  */
 @Injectable({ providedIn: 'root' })
 export class ImmersivePrefsStore {
-  private readonly _enabled = signal(restore().enabled);
-  private readonly _intensity = signal<ImmersiveIntensity>(restore().intensity);
+  private readonly _restored = restore();
+  private readonly _enabled = signal(this._restored.enabled);
+  private readonly _intensity = signal<ImmersiveIntensity>(this._restored.intensity);
+  private readonly _cameraMode = signal<ImmersiveCameraMode>(this._restored.cameraMode);
+  private readonly _cameraState = signal<number[] | null>(this._restored.cameraState);
+  private readonly _shelfSource = signal<ImmersiveShelfSource>(this._restored.shelfSource);
 
   readonly enabled = this._enabled.asReadonly();
   readonly intensity = this._intensity.asReadonly();
+  readonly cameraMode = this._cameraMode.asReadonly();
+  readonly cameraState = this._cameraState.asReadonly();
+  readonly shelfSource = this._shelfSource.asReadonly();
 
   /** The engine is only worth mounting when enabled and not set to `off`. */
   readonly active = computed(() => this._enabled() && this._intensity() !== 'off');
@@ -66,11 +109,33 @@ export class ImmersivePrefsStore {
     this.persist();
   }
 
+  setCameraMode(mode: ImmersiveCameraMode): void {
+    this._cameraMode.set(mode);
+    this.persist();
+  }
+
+  /** Persist the manual framing (or `null` to fall back to the default on next entry). */
+  setCameraState(state: number[] | null): void {
+    this._cameraState.set(state);
+    this.persist();
+  }
+
+  setShelfSource(source: ImmersiveShelfSource): void {
+    this._shelfSource.set(source);
+    this.persist();
+  }
+
   private persist(): void {
     try {
       localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ enabled: this._enabled(), intensity: this._intensity() }),
+        JSON.stringify({
+          enabled: this._enabled(),
+          intensity: this._intensity(),
+          cameraMode: this._cameraMode(),
+          cameraState: this._cameraState(),
+          shelfSource: this._shelfSource(),
+        }),
       );
     } catch {
       /* storage unavailable (private mode / quota) — prefs simply won't survive a reload */

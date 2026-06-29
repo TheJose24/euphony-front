@@ -15,6 +15,7 @@ function dto(overrides: Partial<SongResponseDTO> = {}): SongResponseDTO {
     duration: '00:04:52',
     language: null,
     lyrics: null,
+    syncedLyrics: null,
     releaseDate: '1992-11-09',
     filePath: null,
     averageRating: null,

@@ -3,6 +3,12 @@
  * Field names and shapes mirror the backend exactly — see docs_backend/API_ENDPOINTS.md §6.6.
  */
 
+/** One time-stamped lyric line. `timeMs` is the line's start in milliseconds. */
+export interface LyricLineDTO {
+  timeMs: number;
+  text: string;
+}
+
 /** Response body for GET `/all` and GET `/search/{id}`. */
 export interface SongResponseDTO {
   songId: number;
@@ -16,6 +22,11 @@ export interface SongResponseDTO {
   duration: string; // "HH:mm:ss"
   language: string | null;
   lyrics: string | null;
+  /**
+   * Time-synced lyrics, ascending by `timeMs`. `null` when the song has none (e.g.
+   * instrumentals) → fall back to plain `lyrics`. Additive; does not replace `lyrics`.
+   */
+  syncedLyrics: LyricLineDTO[] | null;
   releaseDate: string | null; // "yyyy-MM-dd"
   filePath: string | null;
   averageRating: number | null;

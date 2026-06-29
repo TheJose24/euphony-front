@@ -12,14 +12,37 @@
     aria-hidden="true"
   ></div>
 
-  <!-- Overlay: auto-hides after inactivity, reappears on movement -->
+  <!-- CSS3D host for synced lyrics in the scene (pointer-events none so the camera can orbit;
+       the active line re-enables clicks for seeking). -->
+  <div #lyric3d class="pointer-events-none absolute inset-0 overflow-hidden"></div>
+  <!-- Screen-reader announcement of the active synced line. -->
+  <div class="sr-only" aria-live="polite">{{ activeLyricLine() }}</div>
+
+  <!-- Overlay: auto-hides after inactivity, reappears on movement. The container is
+       pointer-events-none so drags on empty space reach the canvas (OrbitControls); only the
+       control clusters opt back in while visible. -->
   <div
-    class="absolute inset-0 flex flex-col justify-between p-6 transition-base md:p-10"
-    [class.pointer-events-none]="!overlayVisible()"
+    class="pointer-events-none absolute inset-0 flex flex-col justify-between p-6 transition-base md:p-10"
     [class.opacity-0]="!overlayVisible()"
   >
-    <!-- Top bar: settings + exit -->
-    <div class="flex items-start justify-end gap-2">
+    <!-- Top bar: shelf toggle (left) · settings + exit (right) -->
+    <div class="flex items-start justify-between gap-2" [class.pointer-events-auto]="overlayVisible()">
+      <div>
+        @if (player.hasTrack()) {
+          <button
+            type="button"
+            (click)="toggleShelf()"
+            class="flex h-11 w-11 items-center justify-center rounded-full border border-divider bg-surface-2/60 text-soft backdrop-blur transition-base hover:text-foreground"
+            [class.text-primary]="shelfOpen()"
+            [attr.aria-pressed]="shelfOpen()"
+            aria-label="Estante 3D"
+          >
+            <lucide-icon name="layout-grid" class="h-5 w-5"></lucide-icon>
+          </button>
+        }
+      </div>
+
+      <div class="flex items-start gap-2">
       <div class="relative">
         <button
           type="button"
@@ -63,6 +86,70 @@
               «Apagado» mantiene la vista sin visuales 3D. Se respeta tu preferencia de movimiento
               reducido.
             </p>
+
+            <!-- Camera -->
+            <div class="mt-4 border-t border-divider pt-4" role="group" aria-label="Cámara">
+              <p class="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-dim">Cámara</p>
+              <div class="flex flex-col gap-1">
+                @for (opt of cameraModes; track opt.value) {
+                  <button
+                    type="button"
+                    (click)="setCameraMode(opt.value)"
+                    class="flex items-center justify-between rounded-lg px-3 py-2 text-left text-[14px] transition-base"
+                    [class]="
+                      prefs.cameraMode() === opt.value
+                        ? 'bg-surface-3 font-semibold text-foreground'
+                        : 'text-soft hover:bg-surface-3 hover:text-foreground'
+                    "
+                    [attr.aria-pressed]="prefs.cameraMode() === opt.value"
+                  >
+                    {{ opt.label }}
+                    @if (prefs.cameraMode() === opt.value) {
+                      <lucide-icon name="check" class="h-4 w-4 text-primary"></lucide-icon>
+                    }
+                  </button>
+                }
+              </div>
+              <button
+                type="button"
+                (click)="resetView()"
+                class="mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[14px] text-soft transition-base hover:bg-surface-3 hover:text-foreground"
+              >
+                <lucide-icon name="refresh-cw" class="h-4 w-4"></lucide-icon> Restablecer vista
+              </button>
+              <p class="mt-2 text-[12px] leading-snug text-dim">
+                En «Manual» orbitas arrastrando el fondo y acercas con la rueda.
+              </p>
+            </div>
+
+            <!-- Shelf source -->
+            <div class="mt-4 border-t border-divider pt-4" role="group" aria-label="Estante">
+              <p class="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-dim">Estante</p>
+              <div class="flex flex-col gap-1">
+                @for (opt of shelfSources; track opt.value) {
+                  <button
+                    type="button"
+                    (click)="setShelfSource(opt.value)"
+                    class="flex items-center justify-between rounded-lg px-3 py-2 text-left text-[14px] transition-base"
+                    [class]="
+                      prefs.shelfSource() === opt.value
+                        ? 'bg-surface-3 font-semibold text-foreground'
+                        : 'text-soft hover:bg-surface-3 hover:text-foreground'
+                    "
+                    [attr.aria-pressed]="prefs.shelfSource() === opt.value"
+                  >
+                    {{ opt.label }}
+                    @if (prefs.shelfSource() === opt.value) {
+                      <lucide-icon name="check" class="h-4 w-4 text-primary"></lucide-icon>
+                    }
+                  </button>
+                }
+              </div>
+              <p class="mt-2 text-[12px] leading-snug text-dim">
+                Lista vertical a la derecha para navegar sin salir. Selecciona una tarjeta para
+                reproducirla.
+              </p>
+            </div>
           </div>
         }
       </div>
@@ -75,10 +162,53 @@
       >
         <lucide-icon name="x" class="h-5 w-5"></lucide-icon>
       </button>
+      </div>
     </div>
 
     <!-- Bottom: track info + transport -->
-    <div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-6" [class.pointer-events-auto]="overlayVisible()">
+      <!-- Shelf navigation (keyboard-accessible mirror of the 3D side list) -->
+      @if (shelfOpen()) {
+        <div
+          class="flex items-center gap-1 self-end rounded-full border border-divider bg-surface-2/60 py-1.5 pl-2 pr-1.5 backdrop-blur"
+          role="group"
+          aria-label="Navegación del estante"
+        >
+          <button
+            type="button"
+            (click)="shelfPrev()"
+            class="flex h-8 w-8 items-center justify-center rounded-full text-soft transition-base hover:text-foreground"
+            aria-label="Anterior en el estante"
+          >
+            <lucide-icon name="chevron-up" class="h-5 w-5"></lucide-icon>
+          </button>
+          <div class="min-w-0 max-w-[44vw] px-2 text-left sm:max-w-[280px]">
+            @if (shelfCaption(); as cap) {
+              <div class="truncate text-[13px] font-semibold text-foreground">{{ cap.title }}</div>
+              <div class="truncate text-[11px] text-soft">{{ cap.subtitle }}</div>
+            } @else {
+              <div class="text-[13px] text-soft">Estante vacío</div>
+            }
+          </div>
+          <button
+            type="button"
+            (click)="shelfNext()"
+            class="flex h-8 w-8 items-center justify-center rounded-full text-soft transition-base hover:text-foreground"
+            aria-label="Siguiente en el estante"
+          >
+            <lucide-icon name="chevron-down" class="h-5 w-5"></lucide-icon>
+          </button>
+          <button
+            type="button"
+            (click)="selectFocused()"
+            class="ml-1 flex h-8 w-8 items-center justify-center rounded-full bg-white text-black transition-base hover:scale-105"
+            aria-label="Reproducir la selección del estante"
+          >
+            <lucide-icon name="play" class="ml-0.5 h-4 w-4 fill-current"></lucide-icon>
+          </button>
+        </div>
+      }
+
       <div class="max-w-[60ch]">
         <h1
           class="font-display text-4xl font-extrabold leading-[1.02] tracking-tight text-foreground md:text-5xl"
@@ -151,7 +281,7 @@
         </button>
 
         <!-- Lyrics toggle (only when this track has lyrics) -->
-        @if (lyrics()) {
+        @if (hasLyrics()) {
           <button
             type="button"
             (click)="toggleLyrics()"
@@ -193,9 +323,9 @@
     </div>
   </div>
 
-  <!-- Lyric stage: plain text, no time-sync. Independent of the auto-hiding controls so
-       it stays readable; opt-in to honour "calma sobre densidad". -->
-  @if (lyricsOpen() && lyrics(); as text) {
+  <!-- Plain-text lyric fallback (only when the track has NO synced lyrics — synced ones
+       render in the 3D stage above). Side panel, independent of the auto-hiding controls. -->
+  @if (lyricsOpen() && lyrics() && !syncedLyrics()) {
     <aside
       class="absolute inset-y-0 right-0 flex w-full max-w-md animate-fade-in flex-col border-l border-divider bg-surface-2/60 backdrop-blur-xl"
     >
@@ -210,8 +340,8 @@
           <lucide-icon name="x" class="h-5 w-5"></lucide-icon>
         </button>
       </div>
-      <div class="min-h-0 flex-1 overflow-y-auto scroll-smooth px-6 pb-10">
-        <p class="whitespace-pre-line text-[16px] leading-[1.9] text-soft">{{ text }}</p>
+      <div class="min-h-0 flex-1 overflow-y-auto px-6 pb-10">
+        <p class="whitespace-pre-line text-[16px] leading-[1.9] text-soft">{{ lyrics() }}</p>
       </div>
     </aside>
   }

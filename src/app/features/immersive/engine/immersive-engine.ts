@@ -3,10 +3,16 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { Track } from '@core/models/track.model';
-import { ImmersiveIntensity } from '@core/state/immersive-prefs.store';
+import { ImmersiveCameraMode, ImmersiveIntensity } from '@core/state/immersive-prefs.store';
 import { AudioFrame, AudioReactive } from './audio-reactive';
 import { CoverParticles } from './cover-particles';
+import { Shelf3D, ShelfItem } from './shelf-3d';
+import { LyricLine, LyricStage3D } from './lyric-stage-3d';
+
+/** Default camera distance (the A1 framing); manual dolly is bounded around it. */
+const DEFAULT_DISTANCE = 22;
 
 /** Configuration the engine is built with. Most of it can change later via setters. */
 export interface ImmersiveEngineOptions {
@@ -60,6 +66,10 @@ export class ImmersiveEngine {
   private readonly bloom: UnrealBloomPass;
   private readonly scene = new THREE.Scene();
   private readonly camera: THREE.PerspectiveCamera;
+  private readonly controls: OrbitControls;
+  private cameraMode: ImmersiveCameraMode = 'auto';
+  /** Notified when a manual camera interaction ends, so the view can persist the framing. */
+  onCameraEnd?: (state: number[]) => void;
   private readonly clock = new THREE.Clock();
   /** Animation time that only advances during playback (keeps the scene still on pause). */
   private animTime = 0;
@@ -85,6 +95,21 @@ export class ImmersiveEngine {
   private readonly cover: CoverParticles;
   private track: Track | null = null;
 
+  /** The 3D browsing shelf (hidden by default), rendered in its own scene (no bloom). */
+  private readonly shelfScene = new THREE.Scene();
+  private readonly shelf: Shelf3D;
+  private shelfVisible = false;
+  /** Tracks a pointer press that landed on a card (to tell click from drag). */
+  private shelfPointer: { startX: number; startY: number; itemIndex: number; moved: boolean } | null = null;
+  /** Forwarded from the shelf so the view can react (select → play, focus → caption). */
+  onShelfSelect?: (index: number) => void;
+  onShelfFocus?: (index: number) => void;
+
+  /** 3D lyric stage (CSS3D), created once the view hands over its DOM container. */
+  private lyricStage?: LyricStage3D;
+  /** Forwarded when the active lyric line is clicked (→ seek). */
+  onLyricSeek?: (timeMs: number) => void;
+
   private readonly resizeObserver: ResizeObserver;
   private readonly onVisibility = () => this.syncRaf();
 
@@ -99,11 +124,38 @@ export class ImmersiveEngine {
     // Pulled back with a flatter FOV for a more distant, cinematic framing: the cover cloud
     // sits ~40% of the viewport height in a wider field of black (was z=14/FOV 60 → ~56%).
     this.camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
-    this.camera.position.set(0, 0, 22);
+    this.camera.position.set(0, 0, DEFAULT_DISTANCE);
+
+    // OrbitControls power the `manual` camera mode. Disabled by default (`auto` drives the
+    // drift); damping + bounded dolly keep the feel serene. Panning is off so the cloud stays
+    // centred. The 'end' event lets the view persist the user's framing.
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.08;
+    this.controls.enablePan = false;
+    this.controls.rotateSpeed = 0.5;
+    this.controls.zoomSpeed = 0.6;
+    this.controls.minDistance = 12;
+    this.controls.maxDistance = 40;
+    this.controls.target.set(0, 0, 0);
+    this.controls.enabled = false;
+    this.controls.addEventListener('end', () => this.onCameraEnd?.(this.getCameraState()));
 
     this.buildParticles();
     // Accent extracted from the cover tints the backdrop haze (kept turquoise-leaning).
     this.cover = new CoverParticles(this.scene, this.primaryColor, (accent) => this.applyAccent(accent));
+
+    // Browsing shelf (hidden until a source is chosen). Its callbacks bubble to the view.
+    // Label text uses the foreground token (read from CSS, not a hard-coded hex).
+    this.shelf = new Shelf3D(
+      this.shelfScene,
+      this.reducedMotion,
+      '#' + tokenColor('--foreground', '#fafafa').getHexString(),
+    );
+    this.shelf.onSelect = (i) => this.onShelfSelect?.(i);
+    this.shelf.onFocus = (i) => this.onShelfFocus?.(i);
+    // Capture-phase so a press on a card is handled before OrbitControls can start orbiting.
+    window.addEventListener('pointerdown', this.onShelfPointerDown, true);
 
     // Subtle bloom — glow sutil, no neón. High threshold so only bright pixels bloom.
     this.composer = new EffectComposer(this.renderer);
@@ -149,6 +201,123 @@ export class ImmersiveEngine {
   setPlaying(playing: boolean): void {
     this.playing = playing;
   }
+
+  /** Switch camera driver: `manual` enables OrbitControls, `auto` returns to the drift. */
+  setCameraMode(mode: ImmersiveCameraMode): void {
+    this.cameraMode = mode;
+    this.controls.enabled = mode === 'manual';
+  }
+
+  /** Restore a persisted manual framing: `[posX,posY,posZ, targetX,targetY,targetZ]`. */
+  applyCameraState(state: number[]): void {
+    if (state.length < 6) return;
+    this.camera.position.set(state[0], state[1], state[2]);
+    this.controls.target.set(state[3], state[4], state[5]);
+    this.controls.update();
+  }
+
+  /** Current framing as a flat array for persistence. */
+  getCameraState(): number[] {
+    const p = this.camera.position;
+    const t = this.controls.target;
+    return [p.x, p.y, p.z, t.x, t.y, t.z];
+  }
+
+  /** Return to the default distance/target (the "Reset view" action). */
+  resetView(): void {
+    this.camera.position.set(0, 0, DEFAULT_DISTANCE);
+    this.controls.target.set(0, 0, 0);
+    this.controls.update();
+  }
+
+  // --- Shelf ---------------------------------------------------------------
+
+  setShelfItems(items: ShelfItem[]): void {
+    this.shelf.setItems(items);
+  }
+
+  setShelfVisible(visible: boolean): void {
+    this.shelfVisible = visible;
+    this.shelf.setVisible(visible);
+  }
+
+  setShelfFocus(index: number): void {
+    this.shelf.setFocus(index);
+  }
+
+  shelfNext(): void {
+    this.shelf.next();
+  }
+
+  shelfPrev(): void {
+    this.shelf.prev();
+  }
+
+  // --- 3D lyrics -----------------------------------------------------------
+
+  /** Hand over the DOM container that hosts the CSS3D lyric stage (called by the view). */
+  setLyricContainer(container: HTMLElement): void {
+    this.lyricStage?.dispose();
+    this.lyricStage = new LyricStage3D(
+      container,
+      this.reducedMotion,
+      '#' + tokenColor('--foreground', '#fafafa').getHexString(),
+      '#' + tokenColor('--soft', '#9aa0a6').getHexString(),
+    );
+    this.lyricStage.onSeek = (line) => this.onLyricSeek?.(line.timeMs);
+    this.lyricStage.setSize(
+      this.canvas.clientWidth || window.innerWidth,
+      this.canvas.clientHeight || window.innerHeight,
+    );
+  }
+
+  setLyrics(lines: LyricLine[]): void {
+    this.lyricStage?.setLines(lines);
+  }
+
+  setActiveLine(index: number): void {
+    this.lyricStage?.setActive(index);
+  }
+
+  /** NDC for a pointer event relative to the canvas. */
+  private toNdc(e: PointerEvent): { x: number; y: number } {
+    const rect = this.canvas.getBoundingClientRect();
+    return {
+      x: ((e.clientX - rect.left) / rect.width) * 2 - 1,
+      y: -((e.clientY - rect.top) / rect.height) * 2 + 1,
+    };
+  }
+
+  /** Press on a card: claim the gesture from OrbitControls and track click-vs-drag. */
+  private readonly onShelfPointerDown = (e: PointerEvent) => {
+    if (!this.shelfVisible || e.target !== this.canvas) return;
+    const ndc = this.toNdc(e);
+    const hit = this.shelf.raycast(ndc.x, ndc.y, this.camera);
+    if (hit < 0) return; // missed the shelf → let OrbitControls orbit the background
+    e.stopPropagation(); // do NOT orbit when pressing a card
+    this.shelfPointer = { startX: e.clientX, startY: e.clientY, itemIndex: hit, moved: false };
+    window.addEventListener('pointermove', this.onShelfPointerMove);
+    window.addEventListener('pointerup', this.onShelfPointerUp, { once: true });
+  };
+
+  /** Vertical drag scrolls the focus (drag up → later items); ~90px per card. */
+  private readonly onShelfPointerMove = (e: PointerEvent) => {
+    const p = this.shelfPointer;
+    if (!p) return;
+    const dy = e.clientY - p.startY;
+    if (Math.abs(dy) > 6 || Math.abs(e.clientX - p.startX) > 6) p.moved = true;
+    this.shelf.setFocus(p.itemIndex - Math.round(dy / 90));
+  };
+
+  /** Release: a no-move press is a click (focus, or select if already centred). */
+  private readonly onShelfPointerUp = () => {
+    const p = this.shelfPointer;
+    window.removeEventListener('pointermove', this.onShelfPointerMove);
+    this.shelfPointer = null;
+    if (!p || p.moved) return;
+    if (p.itemIndex === this.shelf.focus) this.onShelfSelect?.(p.itemIndex);
+    else this.shelf.setFocus(p.itemIndex);
+  };
 
   /**
    * Hand the engine the playback analyser (from `PlayerStore.getAnalyser()`). The view
@@ -270,22 +439,39 @@ export class ImmersiveEngine {
 
       // Backdrop haze breathes with energy, with a low ceiling (glow sutil, no neón).
       this.pointsMaterial.opacity = 0.35 + Math.min(0.2, frame.level * 0.35 * this.reactAmp);
+    }
 
-      // Gentle cinematic camera drift (disabled under reduced motion).
-      if (!this.reducedMotion) {
-        this.camera.position.x = Math.sin(elapsed * 0.1) * drift * 8;
-        this.camera.position.y = Math.cos(elapsed * 0.07) * drift * 5;
-        this.camera.lookAt(0, 0, 0);
-      }
+    // Camera: manual orbit (OrbitControls + damping) vs engine-driven cinematic drift.
+    // Drift is suppressed under reduced motion; manual interaction is always allowed.
+    if (this.cameraMode === 'manual') {
+      this.controls.update();
+    } else if (!this.reducedMotion) {
+      this.camera.position.x = Math.sin(elapsed * 0.1) * drift * 8;
+      this.camera.position.y = Math.cos(elapsed * 0.07) * drift * 5;
+      this.camera.lookAt(0, 0, 0);
     }
 
     // The cover cloud is the centrepiece — it breathes/pulses even past the ambient field.
     this.cover.update({ frame, elapsed, reactAmp: this.reactAmp, reducedMotion: this.reducedMotion });
 
+    // Shelf navigation eases regardless of playback (it's UI, not audio-reactive).
+    this.shelf.update(delta);
+
     // Bloom swells a touch on beats, with a low ceiling (serene, not a flash).
     this.bloom.strength = this.bloomStrength * (1 + frame.beat * 0.4 * this.reactAmp);
 
     this.composer.render();
+
+    // Shelf renders after — and outside — bloom, so cover art stays crisp, not blown out.
+    if (this.shelfVisible) {
+      this.renderer.autoClear = false;
+      this.renderer.clearDepth();
+      this.renderer.render(this.shelfScene, this.camera);
+      this.renderer.autoClear = true;
+    }
+
+    // Lyrics: separate CSS3D layer (crisp DOM text, no bloom), same camera for parallax.
+    this.lyricStage?.render(this.camera, delta);
   }
 
   private resize(): void {
@@ -294,6 +480,7 @@ export class ImmersiveEngine {
     this.renderer.setSize(w, h, false);
     this.composer.setSize(w, h);
     this.bloom.setSize(w, h);
+    this.lyricStage?.setSize(w, h);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
   }
@@ -314,6 +501,11 @@ export class ImmersiveEngine {
     this.rafId = 0;
     this.resizeObserver.disconnect();
     document.removeEventListener('visibilitychange', this.onVisibility);
+    window.removeEventListener('pointerdown', this.onShelfPointerDown, true);
+    window.removeEventListener('pointermove', this.onShelfPointerMove);
+    this.controls.dispose();
+    this.shelf.dispose();
+    this.lyricStage?.dispose();
     this.cover.dispose();
     this.disposeParticles();
     this.bloom.dispose();

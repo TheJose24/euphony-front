@@ -59,6 +59,18 @@ export const routes: Routes = [
     loadComponent: () => import('@features/profile/profile').then((m) => m.Profile),
   },
   {
+    path: 'plans',
+    title: 'Planes · Euphony',
+    canActivate: [authGuard],
+    loadComponent: () => import('@features/plans/plans').then((m) => m.Plans),
+  },
+  {
+    path: 'subscription',
+    title: 'Tu suscripción · Euphony',
+    canActivate: [authGuard],
+    loadComponent: () => import('@features/subscription/subscription').then((m) => m.Subscription),
+  },
+  {
     path: 'player',
     title: 'Player · Euphony',
     canActivate: [authGuard],

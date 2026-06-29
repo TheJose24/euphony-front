@@ -1,0 +1,103 @@
+<app-layout [(query)]="query">
+  <div class="animate-fade-in px-6 py-10 md:px-10">
+    <!-- Header -->
+    <header class="mx-auto max-w-2xl text-center">
+      <span
+        class="inline-flex items-center gap-2 rounded-full border border-divider bg-surface-2/60 px-4 py-1.5 text-[12px] font-semibold uppercase tracking-[0.18em] text-primary"
+      >
+        <lucide-icon name="crown" class="h-4 w-4" aria-hidden="true"></lucide-icon>
+        Euphony Premium
+      </span>
+      <h1 class="mt-5 font-display text-4xl font-extrabold tracking-tight text-foreground md:text-5xl">
+        Escucha sin límites
+      </h1>
+      <p class="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-soft">
+        Elige el plan que mejor se adapta a ti. Sin permanencia y con prueba gratuita en los planes
+        de pago: cancela cuando quieras.
+      </p>
+    </header>
+
+    <!-- Plan cards -->
+    <div class="mx-auto mt-12 grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-3">
+      @for (plan of plans; track plan.planId) {
+        <section
+          class="relative flex flex-col rounded-2xl border bg-surface-1/40 p-6 transition-base"
+          [class]="
+            plan.popular
+              ? 'border-primary ring-1 ring-primary/40 shadow-glow'
+              : 'border-divider hover:border-soft'
+          "
+        >
+          @if (plan.popular) {
+            <span
+              class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-primary-foreground"
+            >
+              Más popular
+            </span>
+          }
+
+          <!-- Name + description -->
+          <h2 class="text-[20px] font-bold text-foreground">{{ plan.planName }}</h2>
+          <p class="mt-1.5 min-h-[40px] text-[13px] leading-relaxed text-soft">{{ plan.description }}</p>
+
+          <!-- Price -->
+          <div class="mt-5 flex items-end gap-1.5">
+            @if (plan.price === 0) {
+              <span class="font-display text-4xl font-extrabold text-foreground">Gratis</span>
+            } @else {
+              <span class="font-display text-4xl font-extrabold text-foreground"
+                >${{ plan.price.toFixed(2) }}</span
+              >
+              <span class="pb-1.5 text-[14px] text-soft">/ {{ intervalLabel(plan.interval) }}</span>
+            }
+          </div>
+
+          @if (plan.freeTrial) {
+            <span
+              class="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[12px] font-semibold text-primary"
+            >
+              <lucide-icon name="sparkles" class="h-3.5 w-3.5" aria-hidden="true"></lucide-icon>
+              {{ plan.durationFreeTrial }} días gratis
+            </span>
+          }
+
+          <!-- CTA -->
+          <button
+            type="button"
+            (click)="subscribe(plan)"
+            [disabled]="isCurrent(plan)"
+            class="mt-6 flex h-11 w-full items-center justify-center gap-2 rounded-full text-[14px] font-semibold transition-base disabled:cursor-default disabled:opacity-60"
+            [class]="
+              plan.popular
+                ? 'bg-primary text-primary-foreground shadow-glow hover:bg-primary-glow disabled:hover:bg-primary'
+                : 'border border-divider text-foreground hover:border-primary'
+            "
+          >
+            {{ ctaLabel(plan) }}
+            @if (!isCurrent(plan)) {
+              <lucide-icon name="arrow-right" class="h-4 w-4" aria-hidden="true"></lucide-icon>
+            }
+          </button>
+
+          <!-- Features -->
+          <ul class="mt-6 space-y-3 border-t border-divider pt-6">
+            @for (feature of plan.features; track feature) {
+              <li class="flex items-center gap-3 text-[13px] text-foreground">
+                <lucide-icon
+                  [name]="featureMeta(feature).icon"
+                  class="h-4 w-4 shrink-0 text-primary"
+                  aria-hidden="true"
+                ></lucide-icon>
+                {{ featureMeta(feature).label }}
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    </div>
+
+    <p class="mx-auto mt-10 max-w-xl text-center text-[12px] text-dim">
+      Los pagos se procesan de forma segura mediante PayPal. Precios en USD.
+    </p>
+  </div>
+</app-layout>

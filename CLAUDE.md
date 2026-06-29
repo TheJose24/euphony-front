@@ -79,10 +79,15 @@ Docker multi-stage (Node build → nginx SPA). nginx hace fallback SPA a `/index
   username, email, roles) y editar datos (fecha nac., país, ciudad, teléfono, ruta de avatar). El avatar
   del shell (`user-avatar`) sale del perfil; acceso vía menú del avatar. `404` = perfil aún sin crear →
   formulario vacío que el PUT crea/actualiza.
-- **Mock/visual**: botones sociales del login (Facebook/Apple/Google), hero-banners, popular-artists.
-- **Falta**: subida de imagen real para avatar/portada (hoy se guarda una ruta/URL; el backend de perfil
-  no expone multipart); imágenes con `NgOptimizedImage` (pendiente de CDN); módulos planes/suscripciones
-  (PayPal); más tests. Detalle en el plan.
+- **Planes y suscripción (UI mock)**: páginas `/plans` (pricing: tarjetas de plan con features/trial/CTA)
+  y `/subscription` (estado, fechas, cancelar/cambiar) maquetadas con datos mock en
+  [core/data/plans.data.ts](src/app/core/data/plans.data.ts). Los tipos reflejan el contrato (§6.9/§6.10)
+  para que cablear `/api/v1/plans` y `/api/v1/subscriptions` luego sea drop-in. **Sin lógica de pago**:
+  el alta real es un redirect a PayPal que maneja el backend. Acceso: sidebar "Hazte Premium" + menú avatar.
+- **Mock/visual**: botones sociales del login (Facebook/Apple/Google).
+- **Falta**: cablear planes/suscripciones al backend + flujo PayPal (hoy solo UI); subida de imagen real
+  para avatar/portada (hoy ruta/URL; el backend de perfil no expone multipart); imágenes con
+  `NgOptimizedImage` (pendiente de CDN); más tests. Detalle en el plan.
 
 ## Design Context (contexto estratégico de diseño)
 La estrategia de producto y diseño vive en **[PRODUCT.md](PRODUCT.md)** (raíz) — la leen las

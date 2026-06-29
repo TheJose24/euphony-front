@@ -78,6 +78,10 @@ export class PlayerStore {
   /** Real audio element, wired to keep the signals above in sync with playback. */
   private readonly audio = this.createAudio();
 
+  /** Web Audio graph for the immersive visualizer (created lazily, once, on first use). */
+  private audioCtx?: AudioContext;
+  private analyser?: AnalyserNode;
+
   /** Play a list of tracks as the active queue, starting at `startIndex`. */
   setQueue(tracks: Track[], startIndex = 0): void {
     if (!tracks.length) return;
@@ -182,6 +186,31 @@ export class PlayerStore {
       this.audio.currentTime = seconds;
     }
     this._progress.set(seconds);
+  }
+
+  /**
+   * Lazily tap the playback element with a Web Audio `AnalyserNode` for the immersive
+   * visualizer. Created **once** (a media element can only be routed into Web Audio a single
+   * time) and connected through to `destination`, so playback keeps sounding normally.
+   *
+   * Call this from a user gesture (e.g. entering immersive mode): browsers start the
+   * `AudioContext` suspended and only `resume()` honours a gesture. Safe to call repeatedly —
+   * it returns the same analyser and resumes the context if it was suspended.
+   */
+  getAnalyser(): AnalyserNode {
+    if (!this.analyser) {
+      const ctx = new AudioContext();
+      const source = ctx.createMediaElementSource(this.audio);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.8;
+      source.connect(analyser);
+      analyser.connect(ctx.destination); // required: without this the element goes silent
+      this.audioCtx = ctx;
+      this.analyser = analyser;
+    }
+    if (this.audioCtx?.state === 'suspended') void this.audioCtx.resume();
+    return this.analyser;
   }
 
   /** Jump to a queue position and start playing it. */

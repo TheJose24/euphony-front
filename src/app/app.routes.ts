@@ -77,6 +77,12 @@ export const routes: Routes = [
     loadComponent: () => import('@features/player/player').then((m) => m.Player),
   },
   {
+    path: 'immersive',
+    title: 'Modo inmersivo · Euphony',
+    canActivate: [authGuard],
+    loadComponent: () => import('@features/immersive/immersive').then((m) => m.Immersive),
+  },
+  {
     path: '**',
     title: 'Página no encontrada · Euphony',
     loadComponent: () => import('@features/not-found/not-found').then((m) => m.NotFound),

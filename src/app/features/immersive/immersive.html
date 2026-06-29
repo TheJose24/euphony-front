@@ -1,0 +1,192 @@
+<div
+  class="fixed inset-0 z-modal animate-fade-in overflow-hidden bg-background"
+  [class.cursor-none]="!overlayVisible() && !lyricsOpen()"
+>
+  <!-- WebGL scene (behind the overlay) -->
+  <canvas #canvas class="absolute inset-0 h-full w-full"></canvas>
+
+  <!-- Scrim: keeps overlay text readable when the scene brightens -->
+  <div
+    class="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/80 via-background/10 to-background/40 transition-base"
+    [class.opacity-0]="!overlayVisible()"
+    aria-hidden="true"
+  ></div>
+
+  <!-- Overlay: auto-hides after inactivity, reappears on movement -->
+  <div
+    class="absolute inset-0 flex flex-col justify-between p-6 transition-base md:p-10"
+    [class.pointer-events-none]="!overlayVisible()"
+    [class.opacity-0]="!overlayVisible()"
+  >
+    <!-- Top bar: settings + exit -->
+    <div class="flex items-start justify-end gap-2">
+      <div class="relative">
+        <button
+          type="button"
+          (click)="toggleSettings()"
+          class="flex h-11 w-11 items-center justify-center rounded-full border border-divider bg-surface-2/60 text-soft backdrop-blur transition-base hover:text-foreground"
+          [class.text-primary]="settingsOpen()"
+          [attr.aria-expanded]="settingsOpen()"
+          aria-label="Ajustes del modo inmersivo"
+        >
+          <lucide-icon name="settings" class="h-5 w-5"></lucide-icon>
+        </button>
+
+        @if (settingsOpen()) {
+          <div
+            role="group"
+            aria-label="Intensidad visual"
+            class="absolute right-0 top-full mt-2 w-56 animate-fade-in rounded-2xl border border-divider bg-surface-2/80 p-4 backdrop-blur-xl shadow-2xl shadow-black/60"
+          >
+            <p class="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-dim">Intensidad</p>
+            <div class="flex flex-col gap-1">
+              @for (opt of intensities; track opt.value) {
+                <button
+                  type="button"
+                  (click)="setIntensity(opt.value)"
+                  class="flex items-center justify-between rounded-lg px-3 py-2 text-left text-[14px] transition-base"
+                  [class]="
+                    prefs.intensity() === opt.value
+                      ? 'bg-surface-3 font-semibold text-foreground'
+                      : 'text-soft hover:bg-surface-3 hover:text-foreground'
+                  "
+                  [attr.aria-pressed]="prefs.intensity() === opt.value"
+                >
+                  {{ opt.label }}
+                  @if (prefs.intensity() === opt.value) {
+                    <lucide-icon name="check" class="h-4 w-4 text-primary"></lucide-icon>
+                  }
+                </button>
+              }
+            </div>
+            <p class="mt-3 text-[12px] leading-snug text-dim">
+              «Apagado» mantiene la vista sin visuales 3D. Se respeta tu preferencia de movimiento
+              reducido.
+            </p>
+          </div>
+        }
+      </div>
+
+      <button
+        type="button"
+        (click)="exit()"
+        class="flex h-11 w-11 items-center justify-center rounded-full border border-divider bg-surface-2/60 text-soft backdrop-blur transition-base hover:text-foreground"
+        aria-label="Salir del modo inmersivo"
+      >
+        <lucide-icon name="x" class="h-5 w-5"></lucide-icon>
+      </button>
+    </div>
+
+    <!-- Bottom: track info + transport -->
+    <div class="flex flex-col gap-6">
+      <div class="max-w-[60ch]">
+        <h1
+          class="font-display text-4xl font-extrabold leading-[1.02] tracking-tight text-foreground md:text-5xl"
+        >
+          {{ player.current().title }}
+        </h1>
+        <p class="mt-2 text-[16px] text-soft">{{ player.current().artist }}</p>
+        @if (player.current().album) {
+          <p class="mt-0.5 text-[14px] text-dim">{{ player.current().album }}</p>
+        }
+      </div>
+
+      <!-- Seek -->
+      <div class="flex w-full max-w-[640px] items-center gap-3">
+        <span class="w-10 text-right text-[12px] tabular-nums text-soft">{{
+          fmtTime(player.progress())
+        }}</span>
+        <input
+          type="range"
+          class="player-seek flex-1"
+          min="0"
+          [max]="player.duration()"
+          step="1"
+          [value]="player.progress()"
+          (input)="seek($event)"
+          [style.--seek-pct]="player.progressPct() + '%'"
+          aria-label="Progreso de la canción"
+          [attr.aria-valuetext]="fmtTime(player.progress()) + ' de ' + fmtTime(player.duration())"
+        />
+        <span class="w-10 text-[12px] tabular-nums text-soft">{{
+          fmtTime(player.duration())
+        }}</span>
+      </div>
+
+      <!-- Transport -->
+      <div class="flex items-center gap-3">
+        <button
+          type="button"
+          (click)="player.previous()"
+          class="flex h-11 w-11 items-center justify-center text-soft transition-base hover:text-foreground"
+          aria-label="Anterior"
+        >
+          <lucide-icon name="skip-back" class="h-6 w-6 fill-current"></lucide-icon>
+        </button>
+        <button
+          type="button"
+          (click)="player.togglePlay()"
+          class="flex h-16 w-16 items-center justify-center rounded-full bg-white text-black shadow-glow transition-base hover:scale-105"
+          [attr.aria-label]="
+            player.isLoading() ? 'Cargando' : player.isPlaying() ? 'Pausar' : 'Reproducir'
+          "
+          [attr.aria-busy]="player.isLoading()"
+        >
+          @if (player.isLoading()) {
+            <lucide-icon name="loader-circle" class="h-7 w-7 animate-spin" aria-hidden="true"></lucide-icon>
+          } @else if (player.isPlaying()) {
+            <lucide-icon name="pause" class="h-7 w-7 fill-current"></lucide-icon>
+          } @else {
+            <lucide-icon name="play" class="ml-0.5 h-7 w-7 fill-current"></lucide-icon>
+          }
+        </button>
+        <button
+          type="button"
+          (click)="player.next()"
+          [disabled]="!player.hasNext()"
+          class="flex h-11 w-11 items-center justify-center text-soft transition-base hover:text-foreground disabled:cursor-default disabled:opacity-40 disabled:hover:text-soft"
+          aria-label="Siguiente"
+        >
+          <lucide-icon name="skip-forward" class="h-6 w-6 fill-current"></lucide-icon>
+        </button>
+
+        <!-- Lyrics toggle (only when this track has lyrics) -->
+        @if (lyrics()) {
+          <button
+            type="button"
+            (click)="toggleLyrics()"
+            class="ml-1 flex h-11 w-11 items-center justify-center transition-base"
+            [class]="lyricsOpen() ? 'text-primary' : 'text-soft hover:text-foreground'"
+            [attr.aria-pressed]="lyricsOpen()"
+            aria-label="Mostrar la letra"
+          >
+            <lucide-icon name="mic-2" class="h-5 w-5"></lucide-icon>
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Lyric stage: plain text, no time-sync. Independent of the auto-hiding controls so
+       it stays readable; opt-in to honour "calma sobre densidad". -->
+  @if (lyricsOpen() && lyrics(); as text) {
+    <aside
+      class="absolute inset-y-0 right-0 flex w-full max-w-md animate-fade-in flex-col border-l border-divider bg-surface-2/60 backdrop-blur-xl"
+    >
+      <div class="flex items-center justify-between px-6 py-5">
+        <h2 class="text-[13px] font-bold uppercase tracking-[0.18em] text-foreground">Letra</h2>
+        <button
+          type="button"
+          (click)="toggleLyrics()"
+          class="flex h-9 w-9 items-center justify-center rounded-full text-soft transition-base hover:text-foreground"
+          aria-label="Cerrar la letra"
+        >
+          <lucide-icon name="x" class="h-5 w-5"></lucide-icon>
+        </button>
+      </div>
+      <div class="min-h-0 flex-1 overflow-y-auto scroll-smooth px-6 pb-10">
+        <p class="whitespace-pre-line text-[16px] leading-[1.9] text-soft">{{ text }}</p>
+      </div>
+    </aside>
+  }
+</div>

@@ -179,22 +179,31 @@
           </button>
         </div>
 
-        <!-- Like -->
-        <button
-          type="button"
-          (click)="fav.toggle(player.current())"
-          class="mt-6 inline-flex items-center gap-2 text-[13px] font-semibold transition-base"
-          [class]="
-            fav.isLiked(player.current().id) ? 'text-dot-green' : 'text-soft hover:text-foreground'
-          "
-          [attr.aria-pressed]="fav.isLiked(player.current().id)"
-        >
-          @if (fav.isLiked(player.current().id)) {
-            <lucide-icon name="heart" class="h-5 w-5 fill-dot-green"></lucide-icon> En tus favoritos
-          } @else {
-            <lucide-icon name="heart" class="h-5 w-5"></lucide-icon> Añadir a favoritos
-          }
-        </button>
+        <!-- Like + immersive mode -->
+        <div class="mt-6 flex flex-wrap items-center gap-5">
+          <button
+            type="button"
+            (click)="fav.toggle(player.current())"
+            class="inline-flex items-center gap-2 text-[13px] font-semibold transition-base"
+            [class]="
+              fav.isLiked(player.current().id) ? 'text-dot-green' : 'text-soft hover:text-foreground'
+            "
+            [attr.aria-pressed]="fav.isLiked(player.current().id)"
+          >
+            @if (fav.isLiked(player.current().id)) {
+              <lucide-icon name="heart" class="h-5 w-5 fill-dot-green"></lucide-icon> En tus favoritos
+            } @else {
+              <lucide-icon name="heart" class="h-5 w-5"></lucide-icon> Añadir a favoritos
+            }
+          </button>
+          <a
+            routerLink="/immersive"
+            class="inline-flex items-center gap-2 text-[13px] font-semibold text-soft transition-base hover:text-primary"
+            aria-label="Abrir el modo inmersivo"
+          >
+            <lucide-icon name="maximize" class="h-5 w-5"></lucide-icon> Modo inmersivo
+          </a>
+        </div>
         }
       </section>
 

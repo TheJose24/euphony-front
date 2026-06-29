@@ -19,12 +19,14 @@
     "@angular/router": "^21.2.0",
     "lucide-angular": "^0.555.0",
     "rxjs": "~7.8.0",
+    "three": "^0.185.0",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
     "@angular/build": "^21.2.16",
     "@angular/cli": "^21.2.16",
     "@angular/compiler-cli": "^21.2.0",
+    "@types/three": "^0.185.0",
     "autoprefixer": "^10.4.20",
     "jsdom": "^28.0.0",
     "postcss": "^8.4.49",

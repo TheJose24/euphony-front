@@ -1,0 +1,138 @@
+<app-layout [(query)]="query">
+  <div class="animate-fade-in space-y-8 px-6 py-8 md:px-10">
+    <div>
+      <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Tu perfil</h1>
+      <p class="mt-1 text-sm text-soft">Gestiona tu cuenta y tus datos personales</p>
+    </div>
+
+    @if (store.loading()) {
+      <app-loading-state label="Cargando tu perfil…" />
+    } @else if (store.error()) {
+      <app-error-state
+        [message]="'No se pudo cargar tu perfil: ' + store.error()"
+        (retry)="store.load()"
+      />
+    } @else if (store.profile(); as profile) {
+      <!-- Identity header -->
+      <div
+        class="flex flex-col items-center gap-5 rounded-2xl border border-divider/60 bg-surface-2/60 p-8 sm:flex-row sm:items-center sm:gap-7"
+      >
+        <div class="relative shrink-0">
+          <div class="absolute -inset-1 rounded-full bg-primary/30 blur-md"></div>
+          <img
+            [src]="profile.avatar"
+            alt=""
+            width="96"
+            height="96"
+            class="relative h-24 w-24 rounded-full object-cover ring-2 ring-primary"
+          />
+        </div>
+        <div class="text-center sm:text-left">
+          <h2 class="text-2xl font-bold text-foreground">{{ profile.fullName }}</h2>
+          <p class="mt-0.5 text-sm text-soft">{{ '@' + profile.username }}</p>
+          @if (profile.email) {
+            <p class="mt-1 flex items-center justify-center gap-1.5 text-sm text-dim sm:justify-start">
+              <lucide-icon name="info" class="h-4 w-4"></lucide-icon> {{ profile.email }}
+            </p>
+          }
+          @if (roles().length) {
+            <div class="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+              @for (role of roles(); track role) {
+                <span
+                  class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[12px] font-semibold text-primary"
+                >
+                  <lucide-icon name="badge-check" class="h-3.5 w-3.5"></lucide-icon>
+                  {{ roleLabel(role) }}
+                </span>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Editable profile fields -->
+      <form (submit)="onSubmit($event)" class="max-w-2xl space-y-6">
+        <h3 class="text-lg font-bold text-foreground">Datos personales</h3>
+
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <label for="birthDate" class="block text-[13px] font-semibold text-foreground mb-2">
+              Fecha de nacimiento
+            </label>
+            <input
+              id="birthDate"
+              type="date"
+              [value]="birthDate()"
+              (input)="birthDate.set($any($event.target).value)"
+              class="w-full h-11 rounded-md bg-transparent border border-divider px-4 text-[14px] text-foreground placeholder:text-dim outline-none focus:border-primary transition-base [color-scheme:dark]"
+            />
+          </div>
+          <div>
+            <label for="phone" class="block text-[13px] font-semibold text-foreground mb-2">
+              Teléfono
+            </label>
+            <input
+              id="phone"
+              type="tel"
+              [value]="phone()"
+              (input)="phone.set($any($event.target).value)"
+              placeholder="+51 987654321"
+              autocomplete="tel"
+              class="w-full h-11 rounded-md bg-transparent border border-divider px-4 text-[14px] text-foreground placeholder:text-dim outline-none focus:border-primary transition-base"
+            />
+          </div>
+          <div>
+            <label for="country" class="block text-[13px] font-semibold text-foreground mb-2">
+              País
+            </label>
+            <input
+              id="country"
+              [value]="country()"
+              (input)="country.set($any($event.target).value)"
+              placeholder="Perú"
+              autocomplete="country-name"
+              class="w-full h-11 rounded-md bg-transparent border border-divider px-4 text-[14px] text-foreground placeholder:text-dim outline-none focus:border-primary transition-base"
+            />
+          </div>
+          <div>
+            <label for="city" class="block text-[13px] font-semibold text-foreground mb-2">
+              Ciudad
+            </label>
+            <input
+              id="city"
+              [value]="city()"
+              (input)="city.set($any($event.target).value)"
+              placeholder="Lima"
+              autocomplete="address-level2"
+              class="w-full h-11 rounded-md bg-transparent border border-divider px-4 text-[14px] text-foreground placeholder:text-dim outline-none focus:border-primary transition-base"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="imgProfile" class="block text-[13px] font-semibold text-foreground mb-2">
+            Imagen de perfil <span class="font-normal text-dim">(ruta o URL)</span>
+          </label>
+          <input
+            id="imgProfile"
+            [value]="imgProfile()"
+            (input)="imgProfile.set($any($event.target).value)"
+            placeholder="/uploads/images/avatar.jpg"
+            class="w-full h-11 rounded-md bg-transparent border border-divider px-4 text-[14px] text-foreground placeholder:text-dim outline-none focus:border-primary transition-base"
+          />
+        </div>
+
+        <button
+          type="submit"
+          [disabled]="store.saving()"
+          class="flex h-12 items-center justify-center gap-2 rounded-md bg-primary px-8 font-semibold text-[15px] text-white hover:brightness-90 transition-base disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          @if (store.saving()) {
+            <lucide-icon name="loader-circle" class="h-5 w-5 animate-spin"></lucide-icon>
+          }
+          Guardar cambios
+        </button>
+      </form>
+    }
+  </div>
+</app-layout>

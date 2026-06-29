@@ -9,7 +9,7 @@
   >
     <div class="absolute -inset-1 rounded-full bg-primary/30 blur-md"></div>
     <img
-      [src]="avatar"
+      [src]="avatar()"
       alt=""
       width="54"
       height="54"
@@ -27,11 +27,20 @@
         <p class="text-[11px] uppercase tracking-[0.16em] text-dim">Sesión iniciada como</p>
         <p class="mt-0.5 truncate text-[14px] font-semibold text-foreground">{{ username() || 'Usuario' }}</p>
       </div>
+      <a
+        routerLink="/profile"
+        role="menuitem"
+        (click)="open.set(false)"
+        class="flex w-full items-center gap-3 px-4 py-3 text-left text-[14px] text-soft hover:bg-white/5 hover:text-foreground transition-base"
+      >
+        <lucide-icon name="user" class="h-[18px] w-[18px]"></lucide-icon>
+        Ver perfil
+      </a>
       <button
         type="button"
         role="menuitem"
         (click)="logout()"
-        class="flex w-full items-center gap-3 px-4 py-3 text-left text-[14px] text-soft hover:bg-white/5 hover:text-foreground transition-base"
+        class="flex w-full items-center gap-3 border-t border-divider/60 px-4 py-3 text-left text-[14px] text-soft hover:bg-white/5 hover:text-foreground transition-base"
       >
         <lucide-icon name="log-out" class="h-[18px] w-[18px]"></lucide-icon>
         Cerrar sesión

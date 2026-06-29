@@ -53,6 +53,12 @@ export const routes: Routes = [
       import('@features/playlists/playlist-detail/playlist-detail').then((m) => m.PlaylistDetail),
   },
   {
+    path: 'profile',
+    title: 'Tu perfil · Euphony',
+    canActivate: [authGuard],
+    loadComponent: () => import('@features/profile/profile').then((m) => m.Profile),
+  },
+  {
     path: 'player',
     title: 'Player · Euphony',
     canActivate: [authGuard],

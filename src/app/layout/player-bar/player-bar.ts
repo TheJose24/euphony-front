@@ -20,4 +20,20 @@ export class PlayerBar {
   seek(event: Event): void {
     this.player.setProgress(Number((event.target as HTMLInputElement).value));
   }
+
+  /** Set output volume from the slider (0–1). */
+  setVolume(event: Event): void {
+    this.player.setVolume(Number((event.target as HTMLInputElement).value));
+  }
+
+  /** Speaker icon reflecting the current level (muted / low / high). */
+  volumeIcon(): string {
+    if (this.player.muted() || this.player.volume() === 0) return 'volume-x';
+    return this.player.volume() < 0.5 ? 'volume-1' : 'volume-2';
+  }
+
+  /** Accessible value text for the volume slider, e.g. "60%". */
+  volumeLabel(): string {
+    return `${Math.round(this.player.volumePct())}%`;
+  }
 }

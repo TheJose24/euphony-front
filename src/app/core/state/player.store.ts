@@ -15,6 +15,21 @@ function isRealSong(track: Track): boolean {
   return Number.isInteger(id) && id > 0;
 }
 
+const VOLUME_KEY = 'euphony.volume';
+
+/** Restore persisted volume/mute, tolerating absent/corrupt storage. */
+function restoreVolume(): { volume: number; muted: boolean } {
+  try {
+    const raw = localStorage.getItem(VOLUME_KEY);
+    if (!raw) return { volume: 1, muted: false };
+    const p = JSON.parse(raw) as { volume?: unknown; muted?: unknown };
+    const volume = typeof p.volume === 'number' ? Math.min(1, Math.max(0, p.volume)) : 1;
+    return { volume, muted: p.muted === true };
+  } catch {
+    return { volume: 1, muted: false };
+  }
+}
+
 /**
  * Global playback state + the real `<audio>` element driving it.
  *
@@ -43,6 +58,8 @@ export class PlayerStore {
   private readonly _duration = signal(toSeconds(defaultTrack.duration));
   private readonly _shuffle = signal(false);
   private readonly _repeat = signal<RepeatMode>('off');
+  private readonly _volume = signal(restoreVolume().volume);
+  private readonly _muted = signal(restoreVolume().muted);
 
   /** The track currently loaded in the player bar / player page (queue position). */
   readonly current = computed(() => this._queue()[this._index()] ?? defaultTrack);
@@ -52,6 +69,11 @@ export class PlayerStore {
   readonly index = this._index.asReadonly();
   readonly shuffle = this._shuffle.asReadonly();
   readonly repeat = this._repeat.asReadonly();
+  /** Output volume 0–1 and mute state, applied through the Web Audio `GainNode`. */
+  readonly volume = this._volume.asReadonly();
+  readonly muted = this._muted.asReadonly();
+  /** Effective volume as a 0–100 percentage for the volume slider (0 while muted). */
+  readonly volumePct = computed(() => (this._muted() ? 0 : this._volume()) * 100);
 
   /** Full playback lifecycle. */
   readonly status = this._status.asReadonly();
@@ -78,9 +100,15 @@ export class PlayerStore {
   /** Real audio element, wired to keep the signals above in sync with playback. */
   private readonly audio = this.createAudio();
 
-  /** Web Audio graph for the immersive visualizer (created lazily, once, on first use). */
+  /**
+   * Web Audio graph: `source → gain → destination`, with a parallel `source → analyser`
+   * tap for the immersive visualizer. Built once on the first real playback so ALL audio
+   * (not just immersive) flows through the same path — otherwise tapping it later would
+   * audibly change the level mid-session. The `gain` node is the real volume control.
+   */
   private audioCtx?: AudioContext;
   private analyser?: AnalyserNode;
+  private gainNode?: GainNode;
 
   /** Play a list of tracks as the active queue, starting at `startIndex`. */
   setQueue(tracks: Track[], startIndex = 0): void {
@@ -125,6 +153,7 @@ export class PlayerStore {
     if (!isRealSong(this.current())) return; // nothing real to play (silent placeholder)
     if (this.audio.paused) {
       this._status.set('loading');
+      this.ensureAudioGraph(); // route through Web Audio (gesture → context can resume)
       void this.audio.play().catch(() => {
         if (this._status() === 'loading') this._status.set('paused');
       });
@@ -188,29 +217,69 @@ export class PlayerStore {
     this._progress.set(seconds);
   }
 
+  /** Set output volume (0–1). Dragging it up while muted also unmutes. */
+  setVolume(volume: number): void {
+    const v = Math.min(1, Math.max(0, volume));
+    this._volume.set(v);
+    if (v > 0 && this._muted()) this._muted.set(false);
+    this.applyGain();
+    this.persistVolume();
+  }
+
+  toggleMute(): void {
+    this._muted.update((m) => !m);
+    this.applyGain();
+    this.persistVolume();
+  }
+
   /**
-   * Lazily tap the playback element with a Web Audio `AnalyserNode` for the immersive
-   * visualizer. Created **once** (a media element can only be routed into Web Audio a single
-   * time) and connected through to `destination`, so playback keeps sounding normally.
-   *
-   * Call this from a user gesture (e.g. entering immersive mode): browsers start the
-   * `AudioContext` suspended and only `resume()` honours a gesture. Safe to call repeatedly —
-   * it returns the same analyser and resumes the context if it was suspended.
+   * Return the analyser for the immersive visualizer, building the graph if needed.
+   * Call from a user gesture so the `AudioContext` can `resume()` (browsers start it
+   * suspended). The graph is normally already up from the first playback.
    */
   getAnalyser(): AnalyserNode {
+    this.ensureAudioGraph();
+    return this.analyser as AnalyserNode;
+  }
+
+  /**
+   * Build the `source → gain → destination` graph (+ analyser tap) once, and resume the
+   * context if suspended. A media element can only be routed into Web Audio a single time,
+   * so this is idempotent. Called on the first real playback (a user gesture) so the level
+   * is consistent from the start and the immersive tap doesn't change it later.
+   */
+  private ensureAudioGraph(): void {
     if (!this.analyser) {
       const ctx = new AudioContext();
       const source = ctx.createMediaElementSource(this.audio);
+      const gain = ctx.createGain();
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 2048;
       analyser.smoothingTimeConstant = 0.8;
-      source.connect(analyser);
-      analyser.connect(ctx.destination); // required: without this the element goes silent
+      source.connect(gain);
+      gain.connect(ctx.destination); // audio path (volume-controlled)
+      source.connect(analyser); // analysis-only tap, no onward connection needed
+      gain.gain.value = this._muted() ? 0 : this._volume();
       this.audioCtx = ctx;
+      this.gainNode = gain;
       this.analyser = analyser;
     }
     if (this.audioCtx?.state === 'suspended') void this.audioCtx.resume();
-    return this.analyser;
+  }
+
+  /** Push the current volume/mute to the gain node with a short ramp to avoid clicks. */
+  private applyGain(): void {
+    if (!this.gainNode || !this.audioCtx) return;
+    const target = this._muted() ? 0 : this._volume();
+    this.gainNode.gain.setTargetAtTime(target, this.audioCtx.currentTime, 0.015);
+  }
+
+  private persistVolume(): void {
+    try {
+      localStorage.setItem(VOLUME_KEY, JSON.stringify({ volume: this._volume(), muted: this._muted() }));
+    } catch {
+      /* storage unavailable — volume just won't persist across reloads */
+    }
   }
 
   /** Jump to a queue position and start playing it. */
@@ -235,6 +304,7 @@ export class PlayerStore {
     if (isRealSong(track)) {
       this.audio.src = this.songs.streamUrl(Number(track.id));
       this._status.set('loading'); // confirmed by the 'playing' / 'error' events below
+      this.ensureAudioGraph(); // keep all playback on the same Web Audio path (consistent level)
       void this.audio.play().catch(() => {
         // Autoplay blocked (no user gesture) leaves the track cued but paused; a real
         // load/network failure surfaces via the 'error' event, which wins over this.

@@ -177,6 +177,21 @@ export class Immersive implements AfterViewInit, OnDestroy {
     this.player.setProgress(Number((event.target as HTMLInputElement).value));
   }
 
+  setVolume(event: Event): void {
+    this.player.setVolume(Number((event.target as HTMLInputElement).value));
+  }
+
+  /** Speaker icon reflecting the current level (muted / low / high). */
+  volumeIcon(): string {
+    if (this.player.muted() || this.player.volume() === 0) return 'volume-x';
+    return this.player.volume() < 0.5 ? 'volume-1' : 'volume-2';
+  }
+
+  /** Accessible value text for the volume slider, e.g. "60%". */
+  volumeLabel(): string {
+    return `${Math.round(this.player.volumePct())}%`;
+  }
+
   /** Show the overlay and (re)start the inactivity countdown to hide it again. */
   revealOverlay(): void {
     if (!this.overlayVisible()) this.overlayVisible.set(true);

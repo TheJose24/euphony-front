@@ -65,7 +65,8 @@ Docker multi-stage (Node build → nginx SPA). nginx hace fallback SPA a `/index
   (`PlayerStore`), catálogo, **likes de canción** (`FavoritesStore`), **favoritos de álbum**
   (`AlbumFavoritesStore`), **follow de artistas** (`FollowStore` + `FollowersService`),
   **playlists CRUD + canciones** (`PlaylistsStore`/`PlaylistsService`: sidebar crear/borrar,
-  detalle `/playlist/:id`, "añadir a playlist" vía picker global), **biblioteca "Tu biblioteca"**
+  detalle `/playlist/:id` con **editar** (modal: nombre/descr./pública/portada) y **quitar canción**
+  desde el menú ⋯ de la tabla, "añadir a playlist" vía picker global), **biblioteca "Tu biblioteca"**
   (`/library`: tabs Canciones/Álbumes/Playlists/Artistas agregando los stores), **búsqueda dedicada**
   (`/search`: resultados mixtos client-side de canciones/artistas/álbumes), filtros, navegación móvil
   (`bottom-nav`). Stores de favoritos/follow/playlists: optimistas + toast.
@@ -74,9 +75,14 @@ Docker multi-stage (Node build → nginx SPA). nginx hace fallback SPA a `/index
   y refresca en 401 (`/refresh`), `authGuard`/`guestGuard` protegen las rutas, logout en `user-avatar`.
   El `userId` sale de `AuthStore` (ya no hardcoded); los stores por-usuario cargan/limpian vía `effect`
   según `userId`. Nota: la API `/api/v1/**` sigue `permitAll`, así que el flujo 401→refresh está latente.
+- **Perfil de usuario** (`/profile`, `ProfileStore` + `UserProfileService`): ver identidad (nombre,
+  username, email, roles) y editar datos (fecha nac., país, ciudad, teléfono, ruta de avatar). El avatar
+  del shell (`user-avatar`) sale del perfil; acceso vía menú del avatar. `404` = perfil aún sin crear →
+  formulario vacío que el PUT crea/actualiza.
 - **Mock/visual**: botones sociales del login (Facebook/Apple/Google), hero-banners, popular-artists.
-- **Falta**: editar/quitar-canción en playlists (refinamiento); imágenes con `NgOptimizedImage`
-  (pendiente de CDN de imágenes en backend); tests (P3). Detalle en el plan.
+- **Falta**: subida de imagen real para avatar/portada (hoy se guarda una ruta/URL; el backend de perfil
+  no expone multipart); imágenes con `NgOptimizedImage` (pendiente de CDN); módulos planes/suscripciones
+  (PayPal); más tests. Detalle en el plan.
 
 ## Design Context (contexto estratégico de diseño)
 La estrategia de producto y diseño vive en **[PRODUCT.md](PRODUCT.md)** (raíz) — la leen las

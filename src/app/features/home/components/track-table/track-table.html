@@ -120,6 +120,16 @@
                 <lucide-icon name="plus" class="h-4 w-4"></lucide-icon>
                 Añadir a playlist
               </button>
+              @if (removable()) {
+                <button
+                  type="button"
+                  (click)="$event.stopPropagation(); removeFromPlaylist(t.id)"
+                  class="flex w-full items-center gap-2 border-t border-divider px-3 py-2 text-left text-[13px] text-destructive transition-base hover:bg-destructive/10"
+                >
+                  <lucide-icon name="trash-2" class="h-4 w-4"></lucide-icon>
+                  Quitar de la playlist
+                </button>
+              }
             </div>
           }
         </div>

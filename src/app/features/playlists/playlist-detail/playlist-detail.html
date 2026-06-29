@@ -37,15 +37,25 @@
             </p>
           }
           <p class="mt-3 text-[14px] text-soft">{{ tracks().length }} canción(es)</p>
-          <button
-            type="button"
-            (click)="playAll()"
-            [disabled]="tracks().length === 0"
-            class="mt-5 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-[14px] font-semibold text-primary-foreground transition-base hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
-          >
-            <lucide-icon name="play" class="h-4 w-4 fill-current"></lucide-icon>
-            Reproducir
-          </button>
+          <div class="mt-5 flex flex-wrap items-center justify-center gap-3 md:justify-start">
+            <button
+              type="button"
+              (click)="playAll()"
+              [disabled]="tracks().length === 0"
+              class="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-[14px] font-semibold text-primary-foreground transition-base hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+            >
+              <lucide-icon name="play" class="h-4 w-4 fill-current"></lucide-icon>
+              Reproducir
+            </button>
+            <button
+              type="button"
+              (click)="openEdit()"
+              class="inline-flex items-center gap-2 rounded-full border border-divider px-5 py-2.5 text-[14px] font-semibold text-soft transition-base hover:border-soft hover:text-foreground"
+            >
+              <lucide-icon name="pencil" class="h-4 w-4"></lucide-icon>
+              Editar
+            </button>
+          </div>
         </div>
       </section>
 
@@ -62,11 +72,85 @@
             [activeId]="player.current().id"
             [isPlaying]="player.isPlaying()"
             [likedIds]="favStore.ids()"
+            [removable]="true"
             (select)="handleSelect($event)"
             (favoriteToggle)="onToggleFavorite($event)"
+            (remove)="onRemoveTrack($event)"
           />
         }
       </div>
     }
   </div>
+
+  <!-- Edit playlist dialog -->
+  <app-modal [open]="editing()" title="Editar playlist" (close)="closeEdit()">
+    <form (submit)="$event.preventDefault(); saveEdit()" class="space-y-5">
+      <div>
+        <label for="pl-name" class="block text-[13px] font-semibold text-foreground mb-2">Nombre</label>
+        <input
+          id="pl-name"
+          [value]="editName()"
+          (input)="editName.set($any($event.target).value)"
+          placeholder="Nombre de la playlist"
+          maxlength="255"
+          class="w-full h-11 rounded-md bg-transparent border border-divider px-4 text-[14px] text-foreground placeholder:text-dim outline-none focus:border-primary transition-base"
+        />
+      </div>
+      <div>
+        <label for="pl-desc" class="block text-[13px] font-semibold text-foreground mb-2">Descripción</label>
+        <textarea
+          id="pl-desc"
+          [value]="editDescription()"
+          (input)="editDescription.set($any($event.target).value)"
+          rows="3"
+          maxlength="1000"
+          placeholder="Opcional"
+          class="w-full rounded-md bg-transparent border border-divider px-4 py-2.5 text-[14px] text-foreground placeholder:text-dim outline-none focus:border-primary transition-base resize-none"
+        ></textarea>
+      </div>
+      <div>
+        <label for="pl-cover" class="block text-[13px] font-semibold text-foreground mb-2">
+          Portada <span class="font-normal text-dim">(URL http/https)</span>
+        </label>
+        <input
+          id="pl-cover"
+          type="url"
+          [value]="editCover()"
+          (input)="editCover.set($any($event.target).value)"
+          placeholder="https://…"
+          maxlength="255"
+          class="w-full h-11 rounded-md bg-transparent border border-divider px-4 text-[14px] text-foreground placeholder:text-dim outline-none focus:border-primary transition-base"
+        />
+      </div>
+      <label class="flex items-center gap-3 text-[14px] text-foreground cursor-pointer">
+        <input
+          type="checkbox"
+          [checked]="editPublic()"
+          (change)="editPublic.set($any($event.target).checked)"
+          class="h-4 w-4 accent-primary"
+        />
+        Playlist pública
+      </label>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button
+          type="button"
+          (click)="closeEdit()"
+          class="rounded-md px-5 py-2.5 text-[14px] font-semibold text-soft transition-base hover:text-foreground"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          [disabled]="saving()"
+          class="flex items-center gap-2 rounded-md bg-primary px-6 py-2.5 text-[14px] font-semibold text-primary-foreground transition-base hover:brightness-90 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          @if (saving()) {
+            <lucide-icon name="loader-circle" class="h-4 w-4 animate-spin"></lucide-icon>
+          }
+          Guardar
+        </button>
+      </div>
+    </form>
+  </app-modal>
 </app-layout>

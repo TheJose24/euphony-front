@@ -23,9 +23,13 @@ export class TrackTable {
   readonly showHeader = input(true);
   /** Ids of the user's liked songs; drives the filled hearts. */
   readonly likedIds = input<ReadonlySet<string>>(new Set());
+  /** When true, the row menu offers a "remove from playlist" action. */
+  readonly removable = input(false);
   readonly select = output<string>();
   /** Emitted when a heart is clicked; the parent performs the like/unlike. */
   readonly favoriteToggle = output<string>();
+  /** Emitted from the row menu when `removable`; the parent removes the song. */
+  readonly remove = output<string>();
 
   private readonly openMenu = signal<string | null>(null);
   private readonly byId = computed(() => new Map(this.tracks().map((t) => [t.id, t])));
@@ -52,6 +56,12 @@ export class TrackTable {
   addToPlaylist(id: string): void {
     const track = this.byId().get(id);
     if (track) this.picker.open(track);
+    this.closeMenu();
+  }
+
+  /** Row menu: ask the parent to remove this track from the current playlist. */
+  removeFromPlaylist(id: string): void {
+    this.remove.emit(id);
     this.closeMenu();
   }
 

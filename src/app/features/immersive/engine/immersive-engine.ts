@@ -96,8 +96,10 @@ export class ImmersiveEngine {
     this.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     this.renderer.setClearColor(0x000000, 1); // the black background mandated by the design
 
-    this.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
-    this.camera.position.set(0, 0, 14);
+    // Pulled back with a flatter FOV for a more distant, cinematic framing: the cover cloud
+    // sits ~40% of the viewport height in a wider field of black (was z=14/FOV 60 → ~56%).
+    this.camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+    this.camera.position.set(0, 0, 22);
 
     this.buildParticles();
     // Accent extracted from the cover tints the backdrop haze (kept turquoise-leaning).
@@ -189,8 +191,9 @@ export class ImmersiveEngine {
     const { count } = this.level;
     const positions = new Float32Array(count * 3);
     // Hollow shell: the centre is left clear for the cover cloud, this is the backdrop.
-    const inner = 11;
-    const outer = 24;
+    // Sized so the pulled-back camera (z=22) sits comfortably mid-shell, haze all around.
+    const inner = 14;
+    const outer = 30;
     for (let i = 0; i < count; i++) {
       const r = inner + (outer - inner) * Math.cbrt(this.rng(i));
       const theta = this.rng(i + 1) * Math.PI * 2;

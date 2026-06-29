@@ -30,7 +30,7 @@ export class CoverParticles {
   private points?: THREE.Points;
   private geometry?: THREE.BufferGeometry;
   private material?: THREE.PointsMaterial;
-  private baseSize = 0.05;
+  private baseSize = 0.035;
 
   /** Distinguishes async loads so a late-arriving image for a previous track is ignored. */
   private loadToken = 0;

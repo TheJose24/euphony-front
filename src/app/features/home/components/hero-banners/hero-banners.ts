@@ -1,14 +1,16 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
-import { heroBanners } from '@core/data/home.data';
+import { HeroFeature } from '@core/data/home.data';
 
-/** Horizontally-scrollable row of promotional banners at the top of Home. */
+/** Horizontally-scrollable row of featured cards at the top of Home.
+ *  Presentational: the parent builds `features` from real catalog data. */
 @Component({
   selector: 'app-hero-banners',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [LucideAngularModule],
+  imports: [RouterLink, LucideAngularModule],
   templateUrl: './hero-banners.html',
 })
 export class HeroBanners {
-  protected readonly banners = heroBanners;
+  readonly features = input.required<HeroFeature[]>();
 }

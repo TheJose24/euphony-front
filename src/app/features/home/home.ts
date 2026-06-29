@@ -14,8 +14,9 @@ import { ArtistsService } from '@core/api/artists.service';
 import { AlbumsService } from '@core/api/albums.service';
 import { toArtistTile } from '@core/api/artist.mapper';
 import { toAlbumTile } from '@core/api/album.mapper';
+import { mediaUrl } from '@core/api/media';
 import { ArtistTile, AlbumTile } from '@core/models/catalog.model';
-import { contentTabs } from '@core/data/home.data';
+import { contentTabs, HeroFeature } from '@core/data/home.data';
 import { HeroBanners } from './components/hero-banners/hero-banners';
 import { CategoryChips } from './components/category-chips/category-chips';
 import { ContentTabs } from './components/content-tabs/content-tabs';
@@ -64,7 +65,7 @@ export class Home {
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
 
-  /** Discovery tabs; only "Playlist" renders real data for now. */
+  /** Discovery tabs (all five wired to real data). */
   protected readonly tabs = contentTabs;
   protected readonly activeTab = signal(contentTabs[0]);
 
@@ -145,6 +146,61 @@ export class Home {
 
   /** Ids of liked songs, passed to every track-table to drive the hearts. */
   protected readonly likedIds = this.favStore.ids;
+
+  /** Total plays per artist id, aggregated from the songs feed (real popularity signal). */
+  private readonly playsByArtist = computed(() => {
+    const plays = new Map<number, number>();
+    for (const s of this.songsRaw()) {
+      if (s.artistId == null) continue;
+      plays.set(s.artistId, (plays.get(s.artistId) ?? 0) + (s.numberOfPlays ?? 0));
+    }
+    return plays;
+  });
+
+  /** Most-played artists (real data), top 8, for the "Artistas populares" row. */
+  protected readonly popularArtists = computed<ArtistTile[]>(() => {
+    const plays = this.playsByArtist();
+    return [...this.artists()]
+      .sort((a, b) => (plays.get(b.id) ?? 0) - (plays.get(a.id) ?? 0))
+      .slice(0, 8);
+  });
+
+  /** Hero cards built from real catalog content: the most-played album + artist. */
+  protected readonly featured = computed<HeroFeature[]>(() => {
+    const out: HeroFeature[] = [];
+
+    const topSong = [...this.songsRaw()].sort(
+      (a, b) => (b.numberOfPlays ?? 0) - (a.numberOfPlays ?? 0),
+    )[0];
+    if (topSong?.albumId != null) {
+      out.push({
+        kind: 'album',
+        title: topSong.albumTitle ?? 'Álbum destacado',
+        subtitle: `Lo más escuchado · ${topSong.artistName}`,
+        cta: 'Ver álbum',
+        icon: 'disc-3',
+        cover: mediaUrl(topSong.albumCover ?? topSong.coverImg),
+        link: ['/album', topSong.albumId],
+        featured: true,
+      });
+    }
+
+    const topArtist = this.popularArtists()[0];
+    if (topArtist) {
+      out.push({
+        kind: 'artist',
+        title: topArtist.name,
+        subtitle: `Artista en tendencia · ${topArtist.country}`,
+        cta: 'Ver artista',
+        icon: 'mic-2',
+        cover: topArtist.image,
+        link: ['/artist', topArtist.id],
+        featured: false,
+      });
+    }
+
+    return out;
+  });
 
   constructor() {
     this.loadSongs();
@@ -231,9 +287,9 @@ export class Home {
   /** The track list shown by the active tab — drives the play queue. */
   private activeList(): Track[] {
     switch (this.activeTab()) {
-      case 'Streams':
+      case 'Tendencias':
         return this.streamed();
-      case 'Favorites':
+      case 'Favoritos':
         return this.filteredFavorites();
       default:
         return this.filtered();

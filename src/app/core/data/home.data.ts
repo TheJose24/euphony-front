@@ -1,47 +1,26 @@
-/** Static, presentation-only data for the Home dashboard sections.
- *  These are placeholders for the discovery UI; the Playlist tab is wired to
- *  the real Songs API. The rest will be connected to the backend later. */
+/** Static, presentation-only data for the Home dashboard.
+ *  The only hardcoded value left is the tab set; the hero and the popular-artists
+ *  row are now derived from real catalog data in `Home` (see its `featured` and
+ *  `popularArtists` computeds). */
 
-export interface HeroBanner {
+/** A featured card in the Home hero, built from real catalog content. */
+export interface HeroFeature {
+  /** What the card points at — drives the icon and copy. */
+  kind: 'album' | 'artist';
   title: string;
   subtitle: string;
+  /** Call-to-action label (e.g. "Ver álbum"). */
   cta: string;
-  /** lucide icon name shown inside the CTA button, or null for none. */
+  /** lucide icon shown inside the CTA, or null for none. */
   icon: string | null;
+  /** Resolved artwork URL, or null to fall back to a neutral placeholder. */
+  cover: string | null;
+  /** Router commands the whole card links to. */
+  link: (string | number)[];
   /** When true the card uses the highlighted (teal-tinted) treatment. */
   featured: boolean;
 }
 
-export interface PopularArtist {
-  name: string;
-  /** Cover/photo URL used as the artist tile image. */
-  photo: string;
-}
-
-/** Tabs that switch the main content area. Only "Playlist" is wired for now. */
-export const contentTabs: string[] = ['Playlist', 'Artists', 'Albums', 'Streams', 'Favorites'];
-
-export const heroBanners: HeroBanner[] = [
-  {
-    title: 'Your Personalized Musical Journey',
-    subtitle: 'Unlock the Realm of Sonic Bliss with Our Streaming App',
-    cta: 'Upgrade now',
-    icon: 'crown',
-    featured: true,
-  },
-  {
-    title: 'Where Everyone Finds a Home',
-    subtitle: 'Elevate Your Life with Music Streaming for Everyone',
-    cta: 'Learn more',
-    icon: null,
-    featured: false,
-  },
-];
-
-export const popularArtists: PopularArtist[] = [
-  { name: 'Lily Moonshadow', photo: 'assets/album1.jpg' },
-  { name: 'Max Silverlake', photo: 'assets/album2.jpg' },
-  { name: 'Ruby Riversong', photo: 'assets/album3.jpg' },
-  { name: 'Finn Oceanwood', photo: 'assets/album4.jpg' },
-  { name: 'Neon Vega', photo: 'assets/album5.jpg' },
-];
+/** Tabs that switch the main content area (all five are wired to real data).
+ *  The label is also the switch key, matching the Library tabs convention. */
+export const contentTabs: string[] = ['Canciones', 'Artistas', 'Álbumes', 'Tendencias', 'Favoritos'];

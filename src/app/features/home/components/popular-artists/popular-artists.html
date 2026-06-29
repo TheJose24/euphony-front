@@ -1,31 +1,49 @@
 <section>
-  <h2 class="text-[13px] font-bold uppercase tracking-[0.18em] text-foreground">Popular Artist</h2>
+  <h2 class="text-[13px] font-bold uppercase tracking-[0.18em] text-foreground">Artistas populares</h2>
 
   <div class="mt-4 flex gap-5 overflow-x-auto pb-2">
-    @for (artist of artists; track artist.name) {
-      <button
-        type="button"
+    @for (artist of artists(); track artist.id) {
+      <a
+        [routerLink]="['/artist', artist.id]"
         class="group relative w-[200px] shrink-0 overflow-hidden rounded-xl bg-surface-1/40 text-left transition-base hover:bg-surface-2"
+        [attr.aria-label]="'Ver a ' + artist.name"
       >
-        <div class="relative aspect-[4/3] w-full overflow-hidden">
-          <img
-            [src]="artist.photo"
-            [alt]="artist.name"
-            loading="lazy"
-            class="h-full w-full object-cover transition-base group-hover:scale-105"
-          />
-          <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
-          <span
-            class="absolute bottom-3 right-3 flex h-10 w-10 translate-y-2 items-center justify-center rounded-full bg-primary text-primary-foreground opacity-0 shadow-glow transition-base group-hover:translate-y-0 group-hover:opacity-100"
-          >
-            <lucide-icon name="play" class="h-4 w-4 fill-current ml-0.5"></lucide-icon>
-          </span>
+        <div class="relative aspect-[4/3] w-full overflow-hidden bg-surface-2">
+          @if (artist.image; as img) {
+            <img
+              [src]="img"
+              [alt]="artist.name"
+              loading="lazy"
+              class="h-full w-full object-cover transition-base group-hover:scale-105"
+            />
+            <div
+              class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"
+            ></div>
+          } @else {
+            <div class="flex h-full w-full items-center justify-center text-5xl font-bold text-dim">
+              {{ artist.initial }}
+            </div>
+          }
+          @if (artist.verified) {
+            <span
+              class="absolute left-3 top-3 rounded-full bg-background/80 p-0.5"
+              title="Artista verificado"
+            >
+              <lucide-icon name="badge-check" class="h-4 w-4 text-primary"></lucide-icon>
+            </span>
+          }
         </div>
-        <div class="px-4 py-3">
-          <div class="truncate text-[14px] font-semibold text-foreground">{{ artist.name }}</div>
-          <div class="truncate text-[12px] text-soft">Artist</div>
+        <div class="flex items-center gap-2 px-4 py-3">
+          <div class="min-w-0 flex-1">
+            <div class="truncate text-[14px] font-semibold text-foreground">{{ artist.name }}</div>
+            <div class="truncate text-[12px] text-soft">{{ artist.country }}</div>
+          </div>
+          <lucide-icon
+            name="chevron-right"
+            class="h-4 w-4 shrink-0 text-dim transition-base group-hover:text-primary"
+          ></lucide-icon>
         </div>
-      </button>
+      </a>
     }
   </div>
 </section>

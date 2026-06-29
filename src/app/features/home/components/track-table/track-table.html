@@ -5,9 +5,9 @@
       class="grid grid-cols-[40px_minmax(0,2.2fr)_minmax(0,1.5fr)_minmax(0,1fr)_80px_80px] items-center gap-4 px-4 pb-3 text-[12px] font-semibold uppercase tracking-[0.16em] text-dim border-b border-divider"
     >
       <div class="text-center">#</div>
-      <div>Title</div>
-      <div class="hidden md:block">Album</div>
-      <div class="hidden lg:block">Date added</div>
+      <div>Título</div>
+      <div class="hidden md:block">Álbum</div>
+      <div class="hidden lg:block">Fecha</div>
       <div class="flex justify-end"><lucide-icon name="clock" class="h-4 w-4"></lucide-icon></div>
       <div></div>
     </div>
@@ -80,7 +80,8 @@
                 ? 'text-primary opacity-100'
                 : 'text-soft opacity-0 group-hover:opacity-100 hover:text-foreground'
             "
-            aria-label="Favorite track"
+            [attr.aria-pressed]="isFavorite(t.id)"
+            [attr.aria-label]="isFavorite(t.id) ? 'Quitar de favoritos' : 'Añadir a favoritos'"
           >
             @if (isFavorite(t.id)) {
               <lucide-icon name="heart" class="h-4 w-4 fill-primary"></lucide-icon>
@@ -97,7 +98,7 @@
             type="button"
             (click)="$event.stopPropagation(); toggleMenu(t.id)"
             class="text-soft opacity-0 transition-base group-hover:opacity-100 hover:text-foreground"
-            aria-label="More options"
+            aria-label="Más opciones"
           >
             <lucide-icon name="more-horizontal" class="h-5 w-5"></lucide-icon>
           </button>

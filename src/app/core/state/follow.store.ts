@@ -1,4 +1,4 @@
-import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FollowersService } from '@core/api/followers.service';
 import { FollowersArtistResponseDTO } from '@core/api/dto/follower.dto';
@@ -27,13 +27,22 @@ export class FollowStore {
   readonly ids = computed(() => new Set(this._following().map((f) => f.artistId)));
 
   constructor() {
-    this.load();
+    // React to auth: load followed artists on sign-in, clear them on sign-out.
+    effect(() => (this.auth.userId() ? this.load() : this.clear()));
+  }
+
+  /** Reset to the signed-out state (no follows, not loading). */
+  private clear(): void {
+    this._following.set([]);
+    this._loading.set(false);
   }
 
   load(): void {
+    const userId = this.auth.userId();
+    if (!userId) return;
     this._loading.set(true);
     this.api
-      .getByUser(this.auth.userId())
+      .getByUser(userId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (list) => {

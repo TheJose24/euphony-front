@@ -9,6 +9,7 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import { routes } from './app.routes';
 import { lucideIconsProvider } from '@shared/icons/lucide-icons';
 import { httpErrorInterceptor } from '@core/api/http-error.interceptor';
+import { authInterceptor } from '@core/api/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -18,7 +19,9 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'top' })),
-    provideHttpClient(withFetch(), withInterceptors([httpErrorInterceptor])),
+    // Order matters: `authInterceptor` runs inner (closest to the backend) so it sees
+    // the raw 401 and can refresh + retry before `httpErrorInterceptor` normalises errors.
+    provideHttpClient(withFetch(), withInterceptors([httpErrorInterceptor, authInterceptor])),
     lucideIconsProvider,
   ],
 };

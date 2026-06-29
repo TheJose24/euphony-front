@@ -1,4 +1,4 @@
-import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlbumTile } from '@core/models/catalog.model';
 import { FavoritesService } from '@core/api/favorites.service';
@@ -31,14 +31,24 @@ export class AlbumFavoritesStore {
   readonly ids = computed(() => new Set(this._albums().map((a) => a.id)));
 
   constructor() {
-    this.load();
+    // React to auth: load the user's favorite albums on sign-in, clear them on sign-out.
+    effect(() => (this.auth.userId() ? this.load() : this.clear()));
+  }
+
+  /** Reset to the signed-out state (no favorites, not loading). */
+  private clear(): void {
+    this._albums.set([]);
+    this._loading.set(false);
+    this._error.set(null);
   }
 
   load(): void {
+    const userId = this.auth.userId();
+    if (!userId) return;
     this._loading.set(true);
     this._error.set(null);
     this.api
-      .getFavoriteAlbums(this.auth.userId())
+      .getFavoriteAlbums(userId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (list) => {

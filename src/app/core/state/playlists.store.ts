@@ -1,4 +1,4 @@
-import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PlaylistsService } from '@core/api/playlists.service';
 import { PlaylistResponseDTO } from '@core/api/dto/playlist.dto';
@@ -28,14 +28,24 @@ export class PlaylistsStore {
   readonly isEmpty = computed(() => this._playlists().length === 0);
 
   constructor() {
-    this.load();
+    // React to auth: load the user's playlists on sign-in, clear them on sign-out.
+    effect(() => (this.auth.userId() ? this.load() : this.clear()));
+  }
+
+  /** Reset to the signed-out state (no playlists, not loading). */
+  private clear(): void {
+    this._playlists.set([]);
+    this._loading.set(false);
+    this._error.set(null);
   }
 
   load(): void {
+    const userId = this.auth.userId();
+    if (!userId) return;
     this._loading.set(true);
     this._error.set(null);
     this.api
-      .getByUser(this.auth.userId())
+      .getByUser(userId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (list) => {

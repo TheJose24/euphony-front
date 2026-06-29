@@ -1,4 +1,4 @@
-import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Track } from '@core/models/track.model';
 import { FavoritesService } from '@core/api/favorites.service';
@@ -34,14 +34,24 @@ export class FavoritesStore {
   readonly ids = computed(() => new Set(this._tracks().map((t) => t.id)));
 
   constructor() {
-    this.load();
+    // React to auth: load the user's likes on sign-in, clear them on sign-out.
+    effect(() => (this.auth.userId() ? this.load() : this.clear()));
+  }
+
+  /** Reset to the signed-out state (no likes, not loading). */
+  private clear(): void {
+    this._tracks.set([]);
+    this._loading.set(false);
+    this._error.set(null);
   }
 
   load(): void {
+    const userId = this.auth.userId();
+    if (!userId) return;
     this._loading.set(true);
     this._error.set(null);
     this.api
-      .getLikedSongs(this.auth.userId())
+      .getLikedSongs(userId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (songs) => {

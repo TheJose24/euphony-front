@@ -6,7 +6,7 @@
       <!-- Euphony brand mark (recursos/images/logo.png) -->
       <img src="assets/logo.png" alt="Euphony" width="52" height="52" class="h-[52px] w-[52px] rounded-[14px] shadow-lg" />
       <h1 class="mt-5 text-[28px] md:text-[32px] font-extrabold text-foreground text-center">
-        Inicia sesión en Euphony
+        {{ isRegister() ? 'Crea tu cuenta en Euphony' : 'Inicia sesión en Euphony' }}
       </h1>
     </div>
 
@@ -43,19 +43,94 @@
       <div class="h-px flex-1 bg-divider"></div>
     </div>
 
+    @if (error()) {
+      <p
+        role="alert"
+        class="mb-5 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-[13px] text-destructive"
+      >
+        {{ error() }}
+      </p>
+    }
+
     <form (submit)="onSubmit($event)" class="space-y-5">
-      <div>
-        <label class="block text-[13px] font-semibold text-foreground mb-2">
-          Correo electrónico o nombre de usuario
-        </label>
-        <input
-          #emailInput
-          [value]="email()"
-          (input)="email.set(emailInput.value)"
-          placeholder="Ejm: juan@gmail.com, juan321"
-          class="w-full h-11 rounded-md bg-transparent border border-divider px-4 text-[14px] text-foreground placeholder:text-dim outline-none focus:border-primary transition-base"
-        />
-      </div>
+      @if (isRegister()) {
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[13px] font-semibold text-foreground mb-2">Nombre</label>
+            <input
+              #firstNameInput
+              [value]="firstName()"
+              (input)="firstName.set(firstNameInput.value)"
+              placeholder="Juan"
+              autocomplete="given-name"
+              class="w-full h-11 rounded-md bg-transparent border border-divider px-4 text-[14px] text-foreground placeholder:text-dim outline-none focus:border-primary transition-base"
+            />
+            @if (fieldError('firstName')) {
+              <p class="mt-1.5 text-[12px] text-destructive">{{ fieldError('firstName') }}</p>
+            }
+          </div>
+          <div>
+            <label class="block text-[13px] font-semibold text-foreground mb-2">Apellido</label>
+            <input
+              #lastNameInput
+              [value]="lastName()"
+              (input)="lastName.set(lastNameInput.value)"
+              placeholder="Pérez"
+              autocomplete="family-name"
+              class="w-full h-11 rounded-md bg-transparent border border-divider px-4 text-[14px] text-foreground placeholder:text-dim outline-none focus:border-primary transition-base"
+            />
+            @if (fieldError('lastName')) {
+              <p class="mt-1.5 text-[12px] text-destructive">{{ fieldError('lastName') }}</p>
+            }
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[13px] font-semibold text-foreground mb-2">Nombre de usuario</label>
+          <input
+            #usernameInput
+            [value]="username()"
+            (input)="username.set(usernameInput.value)"
+            placeholder="juan321"
+            autocomplete="username"
+            class="w-full h-11 rounded-md bg-transparent border border-divider px-4 text-[14px] text-foreground placeholder:text-dim outline-none focus:border-primary transition-base"
+          />
+          @if (fieldError('username')) {
+            <p class="mt-1.5 text-[12px] text-destructive">{{ fieldError('username') }}</p>
+          }
+        </div>
+
+        <div>
+          <label class="block text-[13px] font-semibold text-foreground mb-2">Correo electrónico</label>
+          <input
+            #emailInput
+            type="email"
+            [value]="email()"
+            (input)="email.set(emailInput.value)"
+            placeholder="juan@gmail.com"
+            autocomplete="email"
+            class="w-full h-11 rounded-md bg-transparent border border-divider px-4 text-[14px] text-foreground placeholder:text-dim outline-none focus:border-primary transition-base"
+          />
+          @if (fieldError('email')) {
+            <p class="mt-1.5 text-[12px] text-destructive">{{ fieldError('email') }}</p>
+          }
+        </div>
+      } @else {
+        <div>
+          <label class="block text-[13px] font-semibold text-foreground mb-2">
+            Correo electrónico o nombre de usuario
+          </label>
+          <input
+            #identifierInput
+            [value]="usernameOrEmail()"
+            (input)="usernameOrEmail.set(identifierInput.value)"
+            placeholder="Ejm: juan@gmail.com, juan321"
+            autocomplete="username"
+            class="w-full h-11 rounded-md bg-transparent border border-divider px-4 text-[14px] text-foreground placeholder:text-dim outline-none focus:border-primary transition-base"
+          />
+        </div>
+      }
+
       <div>
         <label class="block text-[13px] font-semibold text-foreground mb-2">Contraseña</label>
         <input
@@ -63,26 +138,57 @@
           type="password"
           [value]="password()"
           (input)="password.set(passwordInput.value)"
-          placeholder="Ingresa tu contraseña"
+          [placeholder]="isRegister() ? 'Mínimo 8 caracteres' : 'Ingresa tu contraseña'"
+          [attr.autocomplete]="isRegister() ? 'new-password' : 'current-password'"
           class="w-full h-11 rounded-md bg-transparent border border-divider px-4 text-[14px] text-foreground placeholder:text-dim outline-none focus:border-primary transition-base"
         />
+        @if (fieldError('password')) {
+          <p class="mt-1.5 text-[12px] text-destructive">{{ fieldError('password') }}</p>
+        }
       </div>
 
       <button
         type="submit"
-        class="w-full h-12 rounded-md bg-primary text-white font-semibold text-[15px] hover:brightness-90 transition-base"
+        [disabled]="submitting()"
+        class="flex w-full items-center justify-center gap-2 h-12 rounded-md bg-primary text-white font-semibold text-[15px] hover:brightness-90 transition-base disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        Iniciar Sesión
+        @if (submitting()) {
+          <lucide-icon name="loader-circle" class="h-5 w-5 animate-spin"></lucide-icon>
+        }
+        {{ isRegister() ? 'Crear cuenta' : 'Iniciar Sesión' }}
       </button>
     </form>
 
     <div class="mt-6 text-center">
-      <a
-        href="#"
-        class="text-[13px] text-soft underline underline-offset-4 hover:text-primary transition-base"
-      >
-        ¿Se te ha olvidado la contraseña?
-      </a>
+      @if (isRegister()) {
+        <p class="text-[13px] text-soft">
+          ¿Ya tienes cuenta?
+          <button
+            type="button"
+            (click)="setMode('login')"
+            class="text-primary font-semibold underline underline-offset-4 hover:brightness-110 transition-base"
+          >
+            Inicia sesión
+          </button>
+        </p>
+      } @else {
+        <p class="text-[13px] text-soft">
+          ¿No tienes cuenta?
+          <button
+            type="button"
+            (click)="setMode('register')"
+            class="text-primary font-semibold underline underline-offset-4 hover:brightness-110 transition-base"
+          >
+            Regístrate
+          </button>
+        </p>
+        <a
+          href="#"
+          class="mt-3 inline-block text-[13px] text-soft underline underline-offset-4 hover:text-primary transition-base"
+        >
+          ¿Se te ha olvidado la contraseña?
+        </a>
+      }
     </div>
   </div>
 </div>

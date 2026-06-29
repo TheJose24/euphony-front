@@ -69,9 +69,14 @@ Docker multi-stage (Node build → nginx SPA). nginx hace fallback SPA a `/index
   (`/library`: tabs Canciones/Álbumes/Playlists/Artistas agregando los stores), **búsqueda dedicada**
   (`/search`: resultados mixtos client-side de canciones/artistas/álbumes), filtros, navegación móvil
   (`bottom-nav`). Stores de favoritos/follow/playlists: optimistas + toast.
-- **Mock/visual**: login (auth diferida, `userId` hardcoded), hero-banners, popular-artists.
+- **Auth real** (JWT propio del backend, `/api/auth`): login/registro (`AuthStore` + `AuthService`),
+  tokens persistidos en `localStorage`, `authInterceptor` añade `Authorization: Bearer` a `/api/v1/**`
+  y refresca en 401 (`/refresh`), `authGuard`/`guestGuard` protegen las rutas, logout en `user-avatar`.
+  El `userId` sale de `AuthStore` (ya no hardcoded); los stores por-usuario cargan/limpian vía `effect`
+  según `userId`. Nota: la API `/api/v1/**` sigue `permitAll`, así que el flujo 401→refresh está latente.
+- **Mock/visual**: botones sociales del login (Facebook/Apple/Google), hero-banners, popular-artists.
 - **Falta**: editar/quitar-canción en playlists (refinamiento); imágenes con `NgOptimizedImage`
-  (pendiente de CDN de imágenes en backend); tests + auth real (P3). Detalle en el plan.
+  (pendiente de CDN de imágenes en backend); tests (P3). Detalle en el plan.
 
 ## Design Context (contexto estratégico de diseño)
 La estrategia de producto y diseño vive en **[PRODUCT.md](PRODUCT.md)** (raíz) — la leen las

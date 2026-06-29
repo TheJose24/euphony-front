@@ -263,6 +263,13 @@ export class PlayerStore {
   private createAudio(): HTMLAudioElement {
     const audio = new Audio();
     audio.preload = 'metadata';
+    // Fetch the stream with CORS so the immersive visualizer's Web Audio tap can read its
+    // samples. Without this, routing a cross-origin element through `createMediaElementSource`
+    // taints the graph and it outputs silence (zeroes) — which then mutes normal playback too,
+    // since the element is rerouted through Web Audio once tapped. Requires the backend to send
+    // `Access-Control-Allow-Origin` on `GET /api/v1/songs/stream/{id}` (see docs_backend/PROMPT_CORS.md).
+    // Harmless in dev where the proxy makes the stream same-origin.
+    audio.crossOrigin = 'anonymous';
     // 'playing' fires when audio actually starts (after any buffering); 'waiting' when it stalls.
     audio.addEventListener('playing', () => this._status.set('playing'));
     audio.addEventListener('waiting', () => {
